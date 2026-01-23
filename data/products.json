@@ -1,0 +1,53 @@
+{
+  "products": [
+    {
+      "id": "P001",
+      "name": "客製化托特包",
+      "basePrice": 800,
+      "images": {
+        "byColor": {
+          "black": [
+            "https://via.placeholder.com/600x400?text=Black+1",
+            "https://via.placeholder.com/600x400?text=Black+2"
+          ],
+          "white": [
+            "https://via.placeholder.com/600x400?text=White+1",
+            "https://via.placeholder.com/600x400?text=White+2"
+          ]
+        }
+      },
+      "options": [
+        {
+          "key": "size",
+          "label": "尺寸",
+          "type": "single",
+          "required": true,
+          "items": [
+            { "value": "S", "label": "S" },
+            { "value": "M", "label": "M" }
+          ]
+        },
+        {
+          "key": "color",
+          "label": "顏色",
+          "type": "single",
+          "required": true,
+          "items": [
+            { "value": "black", "label": "黑色" },
+            { "value": "white", "label": "白色" }
+          ]
+        },
+        {
+          "key": "type",
+          "label": "類型",
+          "type": "single",
+          "required": true,
+          "items": [
+            { "value": "basic", "label": "基本款", "price": 0 },
+            { "value": "premium", "label": "進階款", "price": 300 }
+          ]
+        }
+      ]
+    }
+  ]
+}
