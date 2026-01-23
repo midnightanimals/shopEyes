@@ -1,0 +1,83 @@
+.cart {
+  &-item {
+    border: 1px solid var(--border-color);
+    background-color: var(--bg-color);
+    margin-bottom: $spacing-md;
+    padding: $spacing-md;
+    display: flex;
+    align-items: center;
+    gap: $spacing-md;
+
+    img {
+      width: 100px;
+      height: 100px;
+      object-fit: cover;
+      border: 1px solid var(--border-color);
+    }
+
+    .item {
+      &-details {
+        flex-grow: 1;
+
+        h5 {
+          font-family: $font-family-serif;
+          font-size: 1.2rem;
+          margin-bottom: $spacing-sm / 2;
+        }
+
+        .specs {
+          font-size: 0.9rem;
+          color: var(--secondary-text-color);
+          margin-bottom: $spacing-sm;
+        }
+
+        .price-info {
+          font-size: 0.95rem;
+          color: var(--text-color);
+          margin-bottom: $spacing-sm;
+        }
+      }
+
+      &actions {
+        display: flex;
+        align-items: center;
+        gap: $spacing-sm / 2;
+
+        .qty-input {
+          width: 60px;
+          text-align: center;
+          -moz-appearance: textfield; // Firefox number input arrows
+          &::-webkit-outer-spin-button,
+          &::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+          }
+        }
+
+        .btn-qty {
+          padding: $spacing-sm / 2 $spacing-sm;
+          min-width: 30px;
+        }
+
+        .btn-remove {
+          padding: $spacing-sm / 2 $spacing-md;
+        }
+      }
+    }
+  }
+
+  &-summary {
+    text-align: right;
+    margin-top: $spacing-lg;
+
+    h4 {
+      font-family: $font-family-serif;
+      font-size: 1.5rem;
+      color: var(--text-color);
+    }
+  }
+}
+
+#ccEmail {
+  margin-bottom: $spacing-md;
+}

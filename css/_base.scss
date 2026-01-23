@@ -1,0 +1,44 @@
+body {
+  font-family: $font-family-serif;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  transition: background-color $transition-speed ease-in-out, color $transition-speed ease-in-out;
+  margin: 0;
+  padding: 0;
+  line-height: 1.7;
+  font-size: 16px;
+}
+
+main {
+  display: block; 
+  min-height: 80vh;
+  padding: $spacing-xl $spacing-lg;
+  overflow-x: hidden; // Prevent horizontal scroll from animations
+}
+
+a {
+  color: var(--link-color);
+  text-decoration: none;
+  transition: color $transition-speed ease;
+
+  &:hover {
+    color: var(--link-hover-color);
+    text-decoration: none;
+  }
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: $font-family-serif;
+  color: var(--text-color);
+  margin-top: 0;
+  margin-bottom: $spacing-lg;
+  font-weight: 400; // Playfair Display is best at 400
+}
+
+.container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 $spacing-md;
+}
+

@@ -1,0 +1,46 @@
+// FONTS
+$font-family-serif: "Noto Serif", "Playfair Display", serif;
+
+// THEME COLORS
+:root {
+  // Light Theme (Default)
+  --bg-color: #ffffff;
+  --text-color: #222222;
+  --secondary-text-color: #666666;
+  --primary-color: #222222;
+  --secondary-color: #888888;
+  --accent-color: #333333;
+  --border-color: #e0e0e0;
+  --header-bg: rgba(255, 255, 255, 0.7);
+  --footer-bg: #ffffff;
+  --link-color: #222222;
+  --link-hover-color: #555555;
+  --logo-dark-display: none;
+  --logo-light-display: block;
+}
+
+[data-theme="dark"] {
+  // Dark Theme
+  --bg-color: #1a1a1a;
+  --text-color: #eaeaea;
+  --secondary-text-color: #999999;
+  --primary-color: #eaeaea;
+  --secondary-color: #bbbbbb;
+  --accent-color: #cccccc;
+  --border-color: #444444;
+  --header-bg: rgba(26, 26, 26, 0.7);
+  --footer-bg: #1a1a1a;
+  --link-color: #eaeaea;
+  --link-hover-color: #bbbbbb;
+  --logo-dark-display: block;
+  --logo-light-display: none;
+}
+
+// Spacing
+$spacing-sm: 8px;
+$spacing-md: 16px;
+$spacing-lg: 32px;
+$spacing-xl: 48px;
+
+// Transitions
+$transition-speed: 0.3s;

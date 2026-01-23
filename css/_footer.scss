@@ -1,0 +1,20 @@
+.site-footer {
+  background-color: var(--footer-bg);
+  border-top: 1px solid var(--border-color);
+  color: var(--secondary-color);
+  padding: $spacing-lg 0;
+  text-align: center;
+  transition: background-color $transition-speed ease, border-color $transition-speed ease;
+
+  .container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  p {
+    margin: 0;
+    font-size: 14px;
+  }
+}
+

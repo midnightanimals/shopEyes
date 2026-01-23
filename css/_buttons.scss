@@ -1,0 +1,51 @@
+// Custom Button Styles
+.btn {
+  font-family: $font-family-serif;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  padding: $spacing-sm $spacing-md;
+  border-radius: 0; // Square edges for a modern look
+  transition: all $transition-speed ease;
+  border: 1px solid var(--border-color); // Thin border
+  background-color: transparent; // Transparent by default
+  color: var(--text-color);
+
+  &:hover {
+    background-color: var(--text-color);
+    color: var(--bg-color);
+    border-color: var(--text-color);
+  }
+
+  &_main {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+    color: var(--bg-color);
+
+    &:hover {
+      background-color: var(--text-color); // Darker on hover for light theme
+      border-color: var(--text-color);
+      color: var(--bg-color);
+    }
+  }
+
+  &_sub {
+    background-color: transparent;
+    border-color: var(--secondary-color);
+    color: var(--secondary-color);
+
+    &:hover {
+      background-color: var(--secondary-color);
+      color: var(--bg-color);
+    }
+  }
+
+  &_link {
+      color: var(--link-color);
+  text-decoration: underline;
+  &:hover {
+    color: var(--link-hover-color);
+    text-decoration: none;
+  }
+  }
+}

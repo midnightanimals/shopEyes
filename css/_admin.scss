@@ -1,0 +1,35 @@
+// Styles for the Admin page
+.admin-product-item {
+  border: 1px solid var(--border-color);
+  background-color: var(--bg-color);
+  margin-bottom: $spacing-md;
+  padding: $spacing-md;
+  transition: all $transition-speed ease;
+
+  .item-field {
+    margin-bottom: $spacing-sm;
+
+    label {
+      font-family: $font-family-serif;
+      font-weight: 500;
+      color: var(--text-color);
+      margin-bottom: $spacing-sm / 2;
+      display: block; // Ensures label is above input
+    }
+    .form-control {
+        width: 100%;
+    }
+  }
+
+  .btn-remove {
+    margin-top: $spacing-md;
+  }
+}
+
+#jsonOutput {
+  margin-top: $spacing-md;
+  border: 1px solid var(--border-color);
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  font-family: monospace;
+}

@@ -1,0 +1,420 @@
+@import url("https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@100..900&family=Noto+Serif:ital,wdth,wght@0,62.5..100,100..900;1,62.5..100,100..900&display=swap");
+:root {
+  --bg-color: #ffffff;
+  --text-color: #222222;
+  --secondary-text-color: #666666;
+  --primary-color: #222222;
+  --secondary-color: #888888;
+  --accent-color: #333333;
+  --border-color: #e0e0e0;
+  --header-bg: rgba(255, 255, 255, 0.7);
+  --footer-bg: #ffffff;
+  --link-color: #222222;
+  --link-hover-color: #555555;
+  --logo-dark-display: none;
+  --logo-light-display: block;
+}
+
+[data-theme=dark] {
+  --bg-color: #1a1a1a;
+  --text-color: #eaeaea;
+  --secondary-text-color: #999999;
+  --primary-color: #eaeaea;
+  --secondary-color: #bbbbbb;
+  --accent-color: #cccccc;
+  --border-color: #444444;
+  --header-bg: rgba(26, 26, 26, 0.7);
+  --footer-bg: #1a1a1a;
+  --link-color: #eaeaea;
+  --link-hover-color: #bbbbbb;
+  --logo-dark-display: block;
+  --logo-light-display: none;
+}
+
+body {
+  font-family: "Noto Serif", "Playfair Display", serif;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  -webkit-transition: background-color 0.3s ease-in-out, color 0.3s ease-in-out;
+  transition: background-color 0.3s ease-in-out, color 0.3s ease-in-out;
+  margin: 0;
+  padding: 0;
+  line-height: 1.7;
+  font-size: 16px;
+}
+
+main {
+  display: block;
+  min-height: 80vh;
+  padding: 48px 32px;
+  overflow-x: hidden;
+}
+
+a {
+  color: var(--link-color);
+  text-decoration: none;
+  -webkit-transition: color 0.3s ease;
+  transition: color 0.3s ease;
+}
+a:hover {
+  color: var(--link-hover-color);
+  text-decoration: none;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: "Noto Serif", "Playfair Display", serif;
+  color: var(--text-color);
+  margin-top: 0;
+  margin-bottom: 32px;
+  font-weight: 400;
+}
+
+.container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
+.site-header {
+  background-color: var(--header-bg);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--border-color);
+  padding: 16px 0;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  -webkit-transition: background-color 0.3s ease, border-color 0.3s ease;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+.site-header .container {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-pack: justify;
+      -ms-flex-pack: justify;
+          justify-content: space-between;
+  -webkit-box-align: center;
+      -ms-flex-align: center;
+          align-items: center;
+}
+.site-header .logo a {
+  display: block;
+}
+.site-header .logo a img {
+  height: 40px;
+  -webkit-transition: opacity 0.3s ease;
+  transition: opacity 0.3s ease;
+}
+.site-header .logo a .logo-dark-theme {
+  display: var(--logo-dark-display);
+}
+.site-header .logo a .logo-light-theme {
+  display: var(--logo-light-display);
+}
+.site-header .main-nav ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  gap: 32px;
+}
+.site-header .main-nav a {
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 16px;
+  padding: 8px 16px;
+  border-radius: 6px;
+  -webkit-transition: background-color 0.3s ease, color 0.3s ease;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+.site-header .main-nav a:hover {
+  background-color: rgba(128, 128, 128, 0.1);
+  text-decoration: none;
+}
+.site-header .header-actions {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-align: center;
+      -ms-flex-align: center;
+          align-items: center;
+}
+
+.site-footer {
+  background-color: var(--footer-bg);
+  border-top: 1px solid var(--border-color);
+  color: var(--secondary-color);
+  padding: 32px 0;
+  text-align: center;
+  -webkit-transition: background-color 0.3s ease, border-color 0.3s ease;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+.site-footer .container {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-pack: center;
+      -ms-flex-pack: center;
+          justify-content: center;
+  -webkit-box-align: center;
+      -ms-flex-align: center;
+          align-items: center;
+}
+.site-footer p {
+  margin: 0;
+  font-size: 14px;
+}
+
+.btn {
+  font-family: "Noto Serif", "Playfair Display", serif;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  padding: 8px 16px;
+  border-radius: 0;
+  -webkit-transition: all 0.3s ease;
+  transition: all 0.3s ease;
+  border: 1px solid var(--border-color);
+  background-color: transparent;
+  color: var(--text-color);
+}
+.btn:hover {
+  background-color: var(--text-color);
+  color: var(--bg-color);
+  border-color: var(--text-color);
+}
+.btn_main {
+  background-color: var(--primary-color);
+  border-color: var(--primary-color);
+  color: var(--bg-color);
+}
+.btn_main:hover {
+  background-color: var(--text-color);
+  border-color: var(--text-color);
+  color: var(--bg-color);
+}
+.btn_sub {
+  background-color: transparent;
+  border-color: var(--secondary-color);
+  color: var(--secondary-color);
+}
+.btn_sub:hover {
+  background-color: var(--secondary-color);
+  color: var(--bg-color);
+}
+.btn_link {
+  color: var(--link-color);
+  text-decoration: underline;
+}
+.btn_link:hover {
+  color: var(--link-hover-color);
+  text-decoration: none;
+}
+
+.form-control {
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  border: 1px solid var(--border-color);
+  border-radius: 0;
+  padding: 8px 16px;
+  -webkit-transition: all 0.3s ease;
+  transition: all 0.3s ease;
+}
+.form-control:focus {
+  border-color: var(--accent-color);
+  -webkit-box-shadow: 0 0 0 0.25rem rgba(var(--accent-color-rgb), 0.25);
+          box-shadow: 0 0 0 0.25rem rgba(var(--accent-color-rgb), 0.25);
+  outline: none;
+}
+.form-label {
+  color: var(--text-color);
+  font-family: "Noto Serif", "Playfair Display", serif;
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+.product-card {
+  border: 1px solid var(--border-color);
+  border-radius: 0;
+  overflow: hidden;
+  background-color: var(--bg-color);
+  -webkit-transition: all 0.3s ease;
+  transition: all 0.3s ease;
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-orient: vertical;
+  -webkit-box-direction: normal;
+      -ms-flex-direction: column;
+          flex-direction: column;
+  height: 100%;
+}
+.product-card:hover {
+  -webkit-box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+          box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  -webkit-transform: translateY(-2px);
+          transform: translateY(-2px);
+}
+.product-card .card-img-top {
+  width: 100%;
+  height: 200px;
+  -o-object-fit: cover;
+     object-fit: cover;
+  display: block;
+  border-bottom: 1px solid var(--border-color);
+}
+.product-card .card-body {
+  padding: 16px;
+  -webkit-box-flex: 1;
+      -ms-flex-positive: 1;
+          flex-grow: 1;
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-orient: vertical;
+  -webkit-box-direction: normal;
+      -ms-flex-direction: column;
+          flex-direction: column;
+  -webkit-box-pack: justify;
+      -ms-flex-pack: justify;
+          justify-content: space-between;
+}
+.product-card .card-title {
+  font-family: "Noto Serif", "Playfair Display", serif;
+  font-size: 1.25rem;
+  margin-bottom: 8px;
+  color: var(--text-color);
+}
+.product-card .card-text {
+  font-family: "Noto Serif", "Playfair Display", serif;
+  font-size: 0.9rem;
+  color: var(--secondary-text-color);
+  margin-bottom: 16px;
+  -webkit-box-flex: 1;
+      -ms-flex-positive: 1;
+          flex-grow: 1;
+}
+.product-card .card-price {
+  font-family: "Noto Serif", "Playfair Display", serif;
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: var(--text-color);
+}
+.product-card .btn {
+  width: 100%;
+}
+
+.cart-item {
+  border: 1px solid var(--border-color);
+  background-color: var(--bg-color);
+  margin-bottom: 16px;
+  padding: 16px;
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-align: center;
+      -ms-flex-align: center;
+          align-items: center;
+  gap: 16px;
+}
+.cart-item img {
+  width: 100px;
+  height: 100px;
+  -o-object-fit: cover;
+     object-fit: cover;
+  border: 1px solid var(--border-color);
+}
+.cart-item .item-details {
+  -webkit-box-flex: 1;
+      -ms-flex-positive: 1;
+          flex-grow: 1;
+}
+.cart-item .item-details h5 {
+  font-family: "Noto Serif", "Playfair Display", serif;
+  font-size: 1.2rem;
+  margin-bottom: 4px;
+}
+.cart-item .item-details .specs {
+  font-size: 0.9rem;
+  color: var(--secondary-text-color);
+  margin-bottom: 8px;
+}
+.cart-item .item-details .price-info {
+  font-size: 0.95rem;
+  color: var(--text-color);
+  margin-bottom: 8px;
+}
+.cart-item .itemactions {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-align: center;
+      -ms-flex-align: center;
+          align-items: center;
+  gap: 4px;
+}
+.cart-item .itemactions .qty-input {
+  width: 60px;
+  text-align: center;
+  -moz-appearance: textfield;
+}
+.cart-item .itemactions .qty-input::-webkit-outer-spin-button, .cart-item .itemactions .qty-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.cart-item .itemactions .btn-qty {
+  padding: 4px 8px;
+  min-width: 30px;
+}
+.cart-item .itemactions .btn-remove {
+  padding: 4px 16px;
+}
+.cart-summary {
+  text-align: right;
+  margin-top: 32px;
+}
+.cart-summary h4 {
+  font-family: "Noto Serif", "Playfair Display", serif;
+  font-size: 1.5rem;
+  color: var(--text-color);
+}
+
+#ccEmail {
+  margin-bottom: 16px;
+}
+
+.admin-product-item {
+  border: 1px solid var(--border-color);
+  background-color: var(--bg-color);
+  margin-bottom: 16px;
+  padding: 16px;
+  -webkit-transition: all 0.3s ease;
+  transition: all 0.3s ease;
+}
+.admin-product-item .item-field {
+  margin-bottom: 8px;
+}
+.admin-product-item .item-field label {
+  font-family: "Noto Serif", "Playfair Display", serif;
+  font-weight: 500;
+  color: var(--text-color);
+  margin-bottom: 4px;
+  display: block;
+}
+.admin-product-item .item-field .form-control {
+  width: 100%;
+}
+.admin-product-item .btn-remove {
+  margin-top: 16px;
+}
+
+#jsonOutput {
+  margin-top: 16px;
+  border: 1px solid var(--border-color);
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  font-family: monospace;
+}

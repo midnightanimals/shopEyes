@@ -1,0 +1,60 @@
+// Custom Card Styles
+.product-card {
+  border: 1px solid var(--border-color);
+  border-radius: 0;
+  overflow: hidden;
+  background-color: var(--bg-color);
+  transition: all $transition-speed ease;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+
+  &:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+  }
+
+  .card {
+    &-img-top {
+      width: 100%;
+      height: 200px; // Fixed height for consistency
+      object-fit: cover;
+      display: block;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    &-body {
+      padding: $spacing-md;
+      flex-grow: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    &-title {
+      font-family: $font-family-serif;
+      font-size: 1.25rem;
+      margin-bottom: $spacing-sm;
+      color: var(--text-color);
+    }
+
+    &-text {
+      font-family: $font-family-serif;
+      font-size: 0.9rem;
+      color: var(--secondary-text-color);
+      margin-bottom: $spacing-md;
+      flex-grow: 1;
+    }
+
+    &-price {
+      font-family: $font-family-serif;
+      font-size: 1.1rem;
+      font-weight: 500;
+      color: var(--text-color);
+    }
+  }
+
+  .btn {
+    width: 100%;
+  }
+}

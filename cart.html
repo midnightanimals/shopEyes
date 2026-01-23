@@ -1,17 +1,64 @@
-<!doctype html>
-<html>
+<!DOCTYPE html>
+<html lang="zh-Hant">
+
 <head>
-  <meta charset="utf-8">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>購物車</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=Playfair+Display&display=swap"
+    rel="stylesheet">
+
+  <link href="css/style.css" rel="stylesheet">
 </head>
-<body class="p-4">
 
-<h2>購物車</h2>
-<pre id="output"></pre>
+<body>
 
-<button class="btn btn-primary" onclick="sendMail()">寄送訂單</button>
+  <div id="header-placeholder"></div>
+  <main>
+    <div class="container py-4">
+      <h1>購物車</h1>
 
-<script src="js/cart.js"></script>
+      <div id="cartArea"></div>
+
+      <hr>
+
+      <div class="mb-3">
+        <label>副本 Email（寄給客戶，可選）</label>
+        <input id="ccEmail" class="form-control" placeholder="客戶信箱（選填）">
+      </div>
+
+      <button id="buildOrder" class="btn btn-outline-secondary mb-3">
+        產生訂單內容
+      </button>
+
+      <button id="sendOrder" class="btn btn_main" disabled>發送訂單</button>
+
+      <div id="orderPreview" class="mt-4 d-none">
+
+        <div class="card">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <strong>訂單內容（可複製）</strong>
+            <button id="copyOrder" class="btn btn-sm btn-outline-primary">
+              📋 一鍵複製
+            </button>
+          </div>
+          <div class="card-body">
+            <pre id="orderText" class="mb-0"></pre>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+  <div id="footer-placeholder"></div>
+
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="js/cart.js"></script>
+  <script src="js/main.js"></script>
 </body>
+
 </html>

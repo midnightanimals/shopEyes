@@ -1,52 +1,111 @@
 {
+  "optionTemplates": {
+    "sizes_standard": {
+      "key": "size",
+      "label": "尺寸",
+      "type": "single",
+      "required": true,
+      "items": [
+        { "value": "S", "label": "Small" },
+        { "value": "M", "label": "Medium" },
+        { "value": "L", "label": "Large", "image": "img/options/size-l.png" }
+      ]
+    },
+
+    "types_basic": {
+      "key": "type",
+      "label": "類型",
+      "type": "single",
+      "required": true,
+      "items": [
+        {
+          "value": "basic",
+          "label": "基本款",
+          "price": 0,
+          "image": "img/options/type-basic.png"
+        },
+        {
+          "value": "premium",
+          "label": "進階款",
+          "price": 300
+        }
+      ]
+    },
+
+    "materials_by_type": {
+      "key": "material",
+      "label": "材質",
+      "type": "single",
+      "required": true,
+      "items": [
+        {
+          "value": "canvas",
+          "label": "帆布",
+          "price": 0,
+          "image": "img/options/material-canvas.png",
+          "availableWhen": {
+            "type": ["basic", "premium"]
+          }
+        },
+        {
+          "value": "leather",
+          "label": "皮革",
+          "price": 800,
+          "availableWhen": {
+            "type": ["premium"]
+          }
+        }
+      ]
+    },
+
+    "addons_common": {
+      "key": "addon",
+      "label": "加購項目",
+      "type": "multi",
+      "required": false,
+      "items": [
+        {
+          "value": "inner_pocket",
+          "label": "內袋",
+          "price": 100,
+          "availableWhen": {
+            "material": ["canvas"]
+          }
+        },
+        {
+          "value": "engraving",
+          "label": "刻字服務",
+          "price": 200,
+          "availableWhen": {
+            "type": ["premium"]
+          }
+        }
+      ]
+    }
+  },
+
   "products": [
     {
       "id": "P001",
       "name": "客製化托特包",
-      "basePrice": 800,
+      "description": "可選尺寸、材質與加購的托特包",
       "images": {
-        "byColor": {
-          "black": [
-            "https://via.placeholder.com/600x400?text=Black+1",
-            "https://via.placeholder.com/600x400?text=Black+2"
-          ],
-          "white": [
-            "https://via.placeholder.com/600x400?text=White+1",
-            "https://via.placeholder.com/600x400?text=White+2"
-          ]
+        "main": "img/products/P001/main.jpg",
+        "gallery": [
+          "img/products/P001/gallery/01.jpg",
+          "img/products/P001/gallery/02.jpg"
+        ],
+        "colors": {
+          "black": "img/products/P001/colors/black.jpg",
+          "white": "img/products/P001/colors/white.jpg"
         }
       },
-      "options": [
-        {
-          "key": "size",
-          "label": "尺寸",
-          "type": "single",
-          "required": true,
-          "items": [
-            { "value": "S", "label": "S" },
-            { "value": "M", "label": "M" }
-          ]
-        },
-        {
-          "key": "color",
-          "label": "顏色",
-          "type": "single",
-          "required": true,
-          "items": [
-            { "value": "black", "label": "黑色" },
-            { "value": "white", "label": "白色" }
-          ]
-        },
-        {
-          "key": "type",
-          "label": "類型",
-          "type": "single",
-          "required": true,
-          "items": [
-            { "value": "basic", "label": "基本款", "price": 0 },
-            { "value": "premium", "label": "進階款", "price": 300 }
-          ]
-        }
+      "basePrice": 1200,
+      "optionTemplateRefs": [
+        "sizes_standard",
+        "types_basic",
+        "materials_by_type",
+        "addons_common"
       ]
     }
   ]
