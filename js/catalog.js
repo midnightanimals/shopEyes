@@ -15,7 +15,7 @@
                   <div class="card-title">${p.name}</div>
                   <p class="card-text">${p.description.substring(0, 100)}...</p>
                   <div class="card-price">$${p.basePrice}</div>
-                  <button class="btn btn_main">查看詳情</button>
+                  <button class="btn btn-primary">查看詳情</button>
                 </div>
               </div>
             </a>

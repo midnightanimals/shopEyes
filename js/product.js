@@ -56,7 +56,7 @@ function renderProduct(product, templates) {
   // 處理顏色 (如果有)
   const colorKeys = Object.keys(product.images.colors || {});
   if (colorKeys.length > 0) {
-      selected.color = colorKeys[0]; // 預設選第一個顏色
+      //selected.color = colorKeys[0]; // 預設選第一個顏色
   }
 
   // 處理 Templates 的預設值
@@ -139,7 +139,7 @@ function renderProduct(product, templates) {
         <button id="plusQty" class="btn btn-outline-secondary">+</button>
       </div>
 
-      <button id="addToCart" class="btn btn_main">加入購物車</button>
+      <button id="addToCart" class="btn btn-primary">加入購物車</button>
     </div>
   `;
 
