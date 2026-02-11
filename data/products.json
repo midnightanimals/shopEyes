@@ -1,84 +1,183 @@
 {
   "optionTemplates": {
-    "sizes_standard": {
+    "eye_size-regular": {
       "key": "size",
-      "label": "尺寸",
+      "label": "1. 尺寸",
       "type": "single",
       "required": true,
       "items": [
-        { "value": "S", "label": "Small" },
-        { "value": "M", "label": "Medium" },
-        { "value": "L", "label": "Large", "image": "img/options/size-l.png" }
+        { "value": "6", "label": "6mm", "image": "img/options/size-6.png" },
+        { "value": "8", "label": "8mm", "image": "img/options/size-8.png" },
+        { "value": "9", "label": "9mm", "image": "img/options/size-9.png" },
+        { "value": "10", "label": "10mm", "image": "img/options/size-10.png" },
+        { "value": "12", "label": "12mm", "image": "img/options/size-12.png" },
+        { "value": "14", "label": "14mm", "image": "img/options/size-14.png" },
+        { "value": "16", "label": "16mm", "image": "img/options/size-16.png" },
+        { "value": "18", "label": "18mm", "image": "img/options/size-18.png" },
+        { "value": "20", "label": "20mm", "image": "img/options/size-20.png" }
       ]
     },
-
-    "types_basic": {
+    "eye_size-small": {
+      "key": "size",
+      "label": "1. 尺寸（小虹膜）",
+      "type": "single",
+      "required": true,
+      "items": [
+        { "value": "6", "label": "6mm", "image": "img/options/size-6.png" },
+        { "value": "8", "label": "8mm", "image": "img/options/size-8.png" },
+        { "value": "9", "label": "9mm", "image": "img/options/size-9.png" },
+        { "value": "10", "label": "10mm", "image": "img/options/size-10.png" },
+        { "value": "12", "label": "12mm", "image": "img/options/size-12.png" },
+        { "value": "14", "label": "14mm", "image": "img/options/size-14.png" },
+        { "value": "16", "label": "16mm", "image": "img/options/size-16.png" },
+        { "value": "18", "label": "18mm", "image": "img/options/size-18.png" },
+        { "value": "20", "label": "20mm", "image": "img/options/size-20.png" }
+      ]
+    },
+    "eye_type": {
       "key": "type",
-      "label": "類型",
+      "label": "2. 類型",
       "type": "single",
       "required": true,
       "items": [
         {
-          "value": "basic",
-          "label": "基本款",
+          "value": "glass",
+          "label": "玻璃眼片",
           "price": 0,
-          "image": "img/options/type-basic.png"
+          "image": "img/options/type-glass.png",
+          "availableWhen": {
+            "size": ["6", "8", "9", "10", "12", "14", "16", "18", "20"]
+          }
         },
         {
-          "value": "premium",
-          "label": "進階款",
-          "price": 300
+          "value": "water_flat",
+          "label": "平面水貼眼",
+          "price": 0,
+          "image": "img/options/type-water_flat.png",
+          "availableWhen": {
+            "size": ["8", "10", "12", "14", "16", "18", "20"]
+          }
+        },
+        {
+          "value": "water_solid",
+          "label": "立體水貼眼",
+          "price": 0,
+          "image": "img/options/type-water_solid.png",
+          "availableWhen": {
+            "size": ["8", "10", "12", "14", "16", "18", "20"]
+          }
+        },
+        {
+          "value": "cast_flat",
+          "label": "石膏壓眼",
+          "status": "coming_soon",
+          "price": 0,
+          "image": "img/options/type-cast_flat.png",
+          "availableWhen": {
+            "size": ["8", "10", "12", "14", "16", "18", "20"]
+          }
         }
       ]
     },
-
-    "materials_by_type": {
+    "eye_materials": {
       "key": "material",
-      "label": "材質",
+      "label": "3. 圖樣材質",
       "type": "single",
       "required": true,
       "items": [
         {
-          "value": "canvas",
-          "label": "帆布",
+          "value": "water",
+          "label": "水貼",
           "price": 0,
-          "image": "img/options/material-canvas.png",
+          "image": "img/options/material-water.png",
           "availableWhen": {
-            "type": ["basic", "premium"]
+            "type": ["water_flat", "water_solid"],
+            "size": ["6", "8", "10", "12", "14", "16", "18", "20"]
           }
         },
         {
-          "value": "leather",
-          "label": "皮革",
-          "price": 800,
+          "value": "photo",
+          "label": "高清",
+          "price": 0,
+          "image": "img/options/material-photo.png",
           "availableWhen": {
-            "type": ["premium"]
+            "type": ["glass", "cast_flat"],
+            "size": ["6", "8", "9", "10", "12", "14", "16", "18", "20"]
+          }
+        },
+        {
+          "value": "metal",
+          "label": "金屬",
+          "price": 0,
+          "image": "img/options/material-metal.png",
+          "availableWhen": {
+            "type": ["glass", "cast_flat"],
+            "size": ["6", "8", "9", "10", "12", "14", "16", "18", "20"]
+          }
+        },
+        {
+          "value": "pearl",
+          "label": "珠光",
+          "price": 0,
+          "image": "img/options/material-pearl.png",
+          "availableWhen": {
+            "type": ["glass", "cast_flat"],
+            "size": ["6", "8", "9", "10", "12", "14", "16", "18", "20"]
+          }
+        },
+        {
+          "value": "laser",
+          "label": "雷射",
+          "price": 0,
+          "image": "img/options/material-laser.png",
+          "availableWhen": {
+            "type": ["glass", "cast_flat"],
+            "size": ["6", "8", "9", "10", "12", "14", "16", "18", "20"]
           }
         }
       ]
     },
-
-    "addons_common": {
+    "eye_addons": {
       "key": "addon",
-      "label": "加購項目",
+      "label": "4. 加購項目",
       "type": "multi",
       "required": false,
       "items": [
         {
-          "value": "inner_pocket",
-          "label": "內袋",
-          "price": 100,
+          "value": "black_eyelid",
+          "label": "黑眼底+10",
+          "price": 10,
+          "image": "",
           "availableWhen": {
-            "material": ["canvas"]
+            "type": ["glass", "water_flat", "water_solid"],
+            "size": ["8", "10", "12", "14", "16", "18", "20"]
           }
         },
         {
-          "value": "engraving",
-          "label": "刻字服務",
-          "price": 200,
+          "value": "glitter",
+          "label": "亮粉+0",
+          "price": 0,
+          "image": "",
           "availableWhen": {
-            "type": ["premium"]
+            "type": ["glass", "water_flat", "water_solid"],
+            "size": ["6", "8", "9", "10", "12", "14", "16", "18", "20"]
           }
+        },
+        {
+          "value": "flat",
+          "label": "霧面+0",
+          "price": 0,
+          "image": "",
+          "availableWhen": {
+            "type": ["water_flat", "water_solid"],
+            "size": ["6", "8", "10", "12", "14", "16", "18", "20"]
+          }
+        },
+        {
+          "value": "clay",
+          "label": "白色眼泥六格+10",
+          "price": 0,
+          "image": ""
         }
       ]
     }
@@ -87,25 +186,26 @@
   "products": [
     {
       "id": "P001",
-      "name": "客製化托特包",
-      "description": "可選尺寸、材質與加購的托特包",
+      "name": "客製化眼珠",
+      "category": "eyes",
+      "description": "可選尺寸、材質與加購的眼珠配置",
       "images": {
         "main": "img/products/P001/main.jpg",
         "gallery": [
-          "img/products/P001/gallery/01.jpg",
-          "img/products/P001/gallery/02.jpg"
+          "img/products/P001/gallery-01.jpg",
+          "img/products/P001/gallery-02.jpg"
         ],
         "colors": {
-          "black": "img/products/P001/colors/black.jpg",
-          "white": "img/products/P001/colors/white.jpg"
+          "red": "img/products/P001/color-red.jpg",
+          "blue": "img/products/P001/color-blue.jpg"
         }
       },
-      "basePrice": 1200,
+      "basePrice": 200,
       "optionTemplateRefs": [
-        "sizes_standard",
-        "types_basic",
-        "materials_by_type",
-        "addons_common"
+        "eye_size-regular",
+        "eye_type",
+        "eye_materials",
+        "eye_addons"
       ]
     }
   ]

@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>商品規格配置器 - 瀑布流測試</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        /* === 自定義樣式 === */
+        body {
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+
+        /* 步驟區塊樣式 */
+        .option-section {
+            transition: all 0.3s ease;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            background: white;
+            border: 1px solid #dee2e6;
+        }
+
+        /* 未激活的步驟 (Disabled Step) */
+        .option-section.step-disabled {
+            opacity: 0.5;
+            pointer-events: none;
+            /* 禁止點擊 */
+            background: #e9ecef;
+        }
+
+        /* 圖片畫廊 */
+        .gallery-thumb {
+            width: 60px;
+            height: 60px;
+            object-fit: cover;
+            cursor: pointer;
+            border: 2px solid transparent;
+            margin-right: 5px;
+        }
+
+        .gallery-thumb.active {
+            border-color: #0d6efd;
+        }
+
+        /* 選項按鈕樣式 */
+        .optionBtn {
+            margin-right: 8px;
+            margin-bottom: 8px;
+            min-width: 60px;
+        }
+
+        /* 當選項因為依賴關係不可用時 (Item Disabled) */
+        .optionBtn.disabled-item {
+            opacity: 0.3;
+            pointer-events: none;
+            text-decoration: line-through;
+            border-color: #ccc;
+        }
+
+        /* Toast 樣式 */
+        .selection-toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.85);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 50px;
+            z-index: 9999;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+            font-size: 0.9rem;
+            white-space: nowrap;
+        }
+
+        .selection-toast.show {
+            opacity: 1;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <div class="row" id="productArea">
+            <div class="text-center py-5">載入中...</div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        /**
+         * 模擬資料來源 (整合了你的 JSON)
+         */
+        const MOCK_DATA = {
+            "optionTemplates": {
+                "eye_size-regular": {
+                    "key": "size", "label": "1. 選擇尺寸", "type": "single", "required": true,
+                    "items": [
+                        { "value": "6", "label": "6mm", "image": "https://placehold.co/400x400/png?text=Size-6" },
+                        { "value": "8", "label": "8mm", "image": "https://placehold.co/400x400/png?text=Size-8" },
+                        { "value": "10", "label": "10mm", "image": "https://placehold.co/400x400/png?text=Size-10" },
+                        { "value": "20", "label": "20mm", "image": "https://placehold.co/400x400/png?text=Size-20" }
+                    ]
+                },
+                "eye_type": {
+                    "key": "type", "label": "2. 選擇類型", "type": "single", "required": true,
+                    "items": [
+                        { "value": "glass", "label": "玻璃眼片", "price": 0, "availableWhen": { "size": ["6", "8", "10", "20"] } }, // 假設都可用
+                        { "value": "water_flat", "label": "平面水貼眼", "price": 0, "availableWhen": { "size": ["8", "10", "20"] } }, // 6mm 不可用
+                        { "value": "water_solid", "label": "立體水貼眼", "price": 0, "availableWhen": { "size": ["8", "10", "20"] } }, // 6mm 不可用
+                        { "value": "cast_flat", "label": "石膏壓眼", "status": "coming_soon", "price": 0, "availableWhen": { "size": ["6", "8", "10", "20"] } }
+                    ]
+                },
+                "eye_materials": {
+                    "key": "material", "label": "3. 選擇材質", "type": "single", "required": true,
+                    "items": [
+                        { "value": "water", "label": "水貼紙", "availableWhen": { "type": ["water_flat", "water_solid"] } },
+                        { "value": "photo", "label": "高清相紙", "availableWhen": { "type": ["glass", "cast_flat"] } },
+                        { "value": "metal", "label": "金屬底", "availableWhen": { "type": ["glass"] } }
+                    ]
+                },
+                "eye_addons": {
+                    "key": "addon", "label": "4. 加購項目", "type": "multi", "required": false,
+                    "items": [
+                        { "value": "black_eyelid", "label": "黑眼底 +10", "price": 10, "availableWhen": { "type": ["glass", "water_flat"] } },
+                        { "value": "glitter", "label": "亮粉", "price": 0, "availableWhen": { "type": ["glass", "water_flat", "water_solid"] } }
+                    ]
+                }
+            },
+            "products": [
+                {
+                    "id": "P001",
+                    "name": "客製化眼珠配置",
+                    "description": "請依照順序選擇：尺寸 > 類型 > 材質 > 加購",
+                    "basePrice": 200,
+                    "images": { "main": "https://placehold.co/600x600/png?text=Main+Image" },
+                    // 這裡的順序決定了 UI 的「瀑布流」順序，非常重要
+                    "optionTemplateRefs": ["eye_size-regular", "eye_type", "eye_materials", "eye_addons"]
+                }
+            ]
+        };
+
+        // === 全域狀態 ===
+        let cartState = {
+            selected: {}, // 儲存使用者的選擇 { size: '6', type: 'glass' ... }
+            templates: [], // 按順序排列的模板物件
+            product: null
+        };
+
+        // === 工具函式 ===
+        function showToast(message) {
+            // 移除舊的
+            $(".selection-toast").remove();
+            const $toast = $(`<div class="selection-toast">${message}</div>`);
+            $("body").append($toast);
+            setTimeout(() => $toast.addClass("show"), 10);
+            setTimeout(() => {
+                $toast.removeClass("show");
+                setTimeout(() => $toast.remove(), 300);
+            }, 3000);
+        }
+
+        // 檢查單一選項是否符合依賴條件 (檢查 availableWhen)
+        function checkIsItemAvailable(item, currentSelections) {
+            if (item.status === 'coming_soon') return false;
+            if (!item.availableWhen) return true;
+
+            return Object.entries(item.availableWhen).every(([reqKey, reqValues]) => {
+                const userVal = currentSelections[reqKey];
+                // 如果該依賴項還沒選，因為我們是瀑布流，視為不可用 (或視邏輯而定，這邊採用嚴格模式)
+                if (!userVal || (Array.isArray(userVal) && userVal.length === 0)) return false;
+
+                // 如果 reqValues 是陣列，檢查是否包含
+                if (Array.isArray(reqValues)) return reqValues.includes(userVal);
+                return reqValues === userVal;
+            });
+        }
+
+        // 計算總價
+        function calculateTotal() {
+            let total = cartState.product.basePrice;
+            cartState.templates.forEach(t => {
+                const val = cartState.selected[t.key];
+                if (!val) return;
+
+                const addPrice = (v) => {
+                    const item = t.items.find(i => i.value === v);
+                    if (item && item.price) total += item.price;
+                };
+
+                if (Array.isArray(val)) val.forEach(addPrice);
+                else addPrice(val);
+            });
+            return total;
+        }
+
+        // === 核心渲染與邏輯 ===
+
+        // 1. 初始化並渲染 HTML 結構
+        function initProduct(productId) {
+            const product = MOCK_DATA.products.find(p => p.id === productId);
+            if (!product) return;
+
+            cartState.product = product;
+            // 依照 refs 順序取出模板，這建立了依賴順序
+            cartState.templates = product.optionTemplateRefs.map(ref => MOCK_DATA.optionTemplates[ref]);
+
+            // 初始化 selected 狀態
+            cartState.templates.forEach(t => {
+                cartState.selected[t.key] = (t.type === 'multi') ? [] : null;
+            });
+
+            renderStructure();
+            updateWaterfallState(); // 第一次計算狀態
+        }
+
+        // 2. 渲染靜態結構 (只執行一次)
+        function renderStructure() {
+            const p = cartState.product;
+            const html = `
+    <div class="col-md-5">
+      <div class="sticky-top" style="top: 20px;">
+        <img id="mainImg" src="${p.images.main}" class="img-fluid rounded mb-3 w-100 bg-white border">
+        <div id="galleryArea" class="d-flex overflow-auto pb-2"></div>
+      </div>
+    </div>
+    <div class="col-md-7">
+      <h2 class="fw-bold">${p.name}</h2>
+      <p class="text-muted">${p.description}</p>
+      <h3 class="text-primary mb-4">NT$ <span id="displayPrice">${p.basePrice}</span></h3>
+      
+      <div id="optionsContainer">
+        ${cartState.templates.map((t, index) => renderTemplateSection(t, index)).join('')}
+      </div>
+
+      <hr class="my-4">
+      <div class="d-flex gap-3">
+        <input type="number" class="form-control text-center" value="1" style="width: 80px;">
+        <button id="btnAddToCart" class="btn btn-primary flex-fill btn-lg">加入購物車</button>
+      </div>
+    </div>
+  `;
+            $("#productArea").html(html);
+
+            // 綁定點擊事件 (使用事件委派)
+            $("#optionsContainer").on("click", ".optionBtn, .addon-checkbox", function (e) {
+                const $this = $(this);
+                // 如果所在的區塊是被鎖住的，不允許點擊
+                if ($this.closest('.option-section').hasClass('step-disabled')) return;
+                // 如果選項本身不可用
+                if ($this.hasClass('disabled-item') || $this.prop('disabled')) return;
+
+                // 修正後的寫法
+                const key = $this.data("key");
+                const val = String($this.data("value"));
+                const type = $this.data("type");
+
+                handleSelection(key, val, type);
+            });
+
+            // 加入購物車
+            $("#btnAddToCart").click(() => {
+                // 簡單檢查最後一個必填項是否有值
+                const missing = cartState.templates.find(t => t.required && !cartState.selected[t.key]);
+                if (missing) {
+                    showToast(`請完成「${missing.label}」的選擇`);
+                    return;
+                }
+                alert("成功加入購物車 (請看 Console)");
+                console.log("Cart Payload:", JSON.parse(JSON.stringify(cartState.selected)));
+            });
+        }
+
+        function renderTemplateSection(t, index) {
+            // 生成選項 HTML
+            let optionsHtml = '';
+            if (t.type === 'single') {
+                optionsHtml = `<div class="d-flex flex-wrap gap-2">
+      ${t.items.map(item => `
+        <button class="btn btn-outline-secondary optionBtn" 
+          data-key="${t.key}" data-value="${item.value}" data-type="single">
+          ${item.label}
+        </button>`).join('')}
+    </div>`;
+            } else {
+                optionsHtml = `<div class="d-flex flex-column gap-2">
+      ${t.items.map(item => `
+        <div class="form-check">
+          <input class="form-check-input addon-checkbox" type="checkbox" 
+            id="opt_${item.value}" data-key="${t.key}" data-value="${item.value}" data-type="multi">
+          <label class="form-check-label" for="opt_${item.value}">
+            ${item.label} ${item.price ? `(+${item.price})` : ''}
+          </label>
+        </div>`).join('')}
+    </div>`;
+            }
+
+            return `
+    <div class="option-section" id="section-${t.key}" data-index="${index}">
+      <h5 class="fw-bold mb-3">${t.label} ${t.required ? '<span class="text-danger">*</span>' : ''}</h5>
+      ${optionsHtml}
+    </div>
+  `;
+        }
+
+        // 3. 處理點擊與狀態更新 (核心邏輯)
+        function handleSelection(key, val, type) {
+            // 更新 selected 資料
+            if (type === 'single') {
+                // Toggle 邏輯：如果點擊已選中的，則取消選取
+                if (cartState.selected[key] === val) {
+                    cartState.selected[key] = null;
+                } else {
+                    cartState.selected[key] = val;
+                }
+            } else {
+                // Multi 邏輯
+                const arr = cartState.selected[key];
+                if (arr.includes(val)) {
+                    cartState.selected[key] = arr.filter(v => v !== val);
+                } else {
+                    arr.push(val);
+                }
+            }
+
+            // 觸發瀑布流檢查
+            updateWaterfallState(key);
+        }
+
+        // 4. 瀑布流狀態計算 (State Derivation)
+        function updateWaterfallState(triggerKey) {
+            let isPreviousStepCompleted = true; // 第一步預設開啟
+            let conflictMsg = [];
+
+            // 依序檢查每一個區塊
+            cartState.templates.forEach((t, index) => {
+                const $section = $(`#section-${t.key}`);
+                const currentVal = cartState.selected[t.key];
+
+                // 狀態 A: 鎖定 (如果上一步沒完成)
+                if (!isPreviousStepCompleted) {
+                    $section.addClass('step-disabled');
+                    // 強制清空該層選擇 (因為還沒走到這)
+                    cartState.selected[t.key] = (t.type === 'multi') ? [] : null;
+                    // 視覺重置
+                    $section.find('.optionBtn').removeClass('active btn-primary').addClass('btn-outline-secondary');
+                    $section.find('input[type="checkbox"]').prop('checked', false);
+                    return; // 後面的步驟也不用看了
+                }
+
+                // 狀態 B: 開啟 (上一步已完成)，進行內容驗證
+                $section.removeClass('step-disabled');
+
+                // 檢查每一個選項是否符合當前已選條件 (availableWhen)
+                let hasValidSelection = false;
+
+                t.items.forEach(item => {
+                    const isAvailable = checkIsItemAvailable(item, cartState.selected);
+
+                    // 更新按鈕的可點擊狀態
+                    if (t.type === 'single') {
+                        const $btn = $section.find(`.optionBtn[data-value="${item.value}"]`);
+
+                        if (!isAvailable) {
+                            $btn.addClass('disabled-item');
+                            // 衝突檢查：如果使用者之前選了這個，現在變不可用 -> 清空並通知
+                            if (currentVal === item.value) {
+                                cartState.selected[t.key] = null;
+                                conflictMsg.push(`${t.label} "${item.label}" 與目前規格不符，已重置`);
+                                $btn.removeClass('active btn-primary').addClass('btn-outline-secondary');
+                            }
+                        } else {
+                            $btn.removeClass('disabled-item');
+                            // 更新選中樣式
+                            if (currentVal === item.value) {
+                                $btn.addClass('active btn-primary').removeClass('btn-outline-secondary');
+                                hasValidSelection = true;
+                            } else {
+                                $btn.removeClass('active btn-primary').addClass('btn-outline-secondary');
+                            }
+                        }
+                    } else {
+                        // Multi (Checkbox)
+                        const $chk = $section.find(`input[value="${item.value}"]`);
+
+                        if (!isAvailable) {
+                            $chk.prop('disabled', true).closest('.form-check').addClass('opacity-50');
+                            // 衝突檢查
+                            if (currentVal.includes(item.value)) {
+                                cartState.selected[t.key] = currentVal.filter(v => v !== item.value);
+                                conflictMsg.push(`${t.label} "${item.label}" 不適用，已取消`);
+                                $chk.prop('checked', false);
+                            }
+                        } else {
+                            $chk.prop('disabled', false).closest('.form-check').removeClass('opacity-50');
+                            $chk.prop('checked', currentVal.includes(item.value));
+                            if (currentVal.length > 0) hasValidSelection = true; // 只要選了一個就算有選
+                        }
+                    }
+                });
+
+                // 判斷這一層是否算「完成」，決定下一層是否開啟
+                // 邏輯：如果是必填(required)且沒選到有效值 -> 下一層鎖定
+                if (t.required && !hasValidSelection && (Array.isArray(currentVal) ? currentVal.length === 0 : !currentVal)) {
+                    isPreviousStepCompleted = false;
+                }
+            });
+
+            // 更新價格
+            $("#displayPrice").text(calculateTotal());
+
+            // 如果有衝突發生，顯示 Toast
+            if (conflictMsg.length > 0) {
+                showToast(conflictMsg[0]); // 顯示第一條即可，避免太長
+            }
+
+            // 如果有選圖片，更新主圖 (這裡簡化處理，只看最後一個被選中的有圖選項)
+            updateImage();
+        }
+
+        function updateImage() {
+            // 簡單邏輯：尋找最後一個被選中且有圖片的選項
+            let targetImg = cartState.product.images.main;
+
+            // 倒序查找比較符合直覺 (例如選了顏色，應該顯示顏色的圖)
+            [...cartState.templates].reverse().forEach(t => {
+                const val = cartState.selected[t.key];
+                if (val && !Array.isArray(val)) {
+                    const item = t.items.find(i => i.value === val);
+                    if (item && item.image) targetImg = item.image;
+                }
+            });
+
+            if ($("#mainImg").attr("src") !== targetImg) {
+                $("#mainImg").attr("src", targetImg);
+            }
+        }
+
+        // 啟動
+        $(document).ready(() => {
+            initProduct("P001");
+        });
+    </script>
+
+</body>
+
+</html>

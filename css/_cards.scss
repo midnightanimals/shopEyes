@@ -9,6 +9,24 @@
   flex-direction: column;
   height: 100%;
 
+  opacity: 0;
+  transform: translateY(30px);
+  transition:
+    opacity 0.5s ease-out,
+    transform 0.5s ease-out;
+
+  &.show {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  // 透過 SCSS 迴圈產生前 12 張卡片的交錯延遲 (Stagger)
+  @for $i from 1 through 12 {
+    &:nth-child(#{$i}) {
+      transition-delay: #{$i * 0.1}s;
+    }
+  }
+
   &:hover {
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     transform: translateY(-2px);

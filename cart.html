@@ -9,8 +9,7 @@
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=Playfair+Display&display=swap"
-    rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=Playfair+Display&display=swap" rel="stylesheet">
 
   <link href="css/style.css" rel="stylesheet">
 </head>
@@ -25,19 +24,26 @@
       <div id="cartArea"></div>
 
       <hr>
-
       <div class="mb-3">
-        <label>副本 Email（寄給客戶，可選）</label>
-        <input id="ccEmail" class="form-control" placeholder="客戶信箱（選填）">
+        <label class="form-label">寄送方式</label>
+        <select id="shippingMethod" class="form-select">
+          <option value="">請選擇寄送方式</option>
+        </select>
       </div>
 
-      <button id="buildOrder" class="btn btn-outline-secondary mb-3">
+
+      <div class="mb-3">
+        <label>電子信箱 Email（會寄送一份訂單內容給您留存喔！）</label>
+        <input id="ccEmail" class="form-control" placeholder="請輸入完整的電子信箱" type="email">
+      </div>
+
+      <!-- <button id="buildOrder" class="btn btn-outline-secondary mb-3">
         產生訂單內容
-      </button>
+      </button> -->
 
       <button id="sendOrder" class="btn btn-primary" disabled>發送訂單</button>
 
-      <div id="orderPreview" class="mt-4 d-none">
+      <!-- <div id="orderPreview" class="mt-4 d-none">
 
         <div class="card">
           <div class="card-header d-flex justify-content-between align-items-center">
@@ -50,7 +56,7 @@
             <pre id="orderText" class="mb-0"></pre>
           </div>
         </div>
-      </div>
+      </div> -->
 
     </div>
   </main>

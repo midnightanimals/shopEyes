@@ -11,41 +11,149 @@
   background-color: transparent; // Transparent by default
   color: var(--text-color);
 
-  &:hover {
-    background-color: var(--text-color);
-    color: var(--bg-color);
-    border-color: var(--text-color);
+  &:hover,
+  &:focus,
+  &:active,
+  &.active {
+    background-color: var(--brand-color) !important;
+    color: var(--text-color) !important;
+    border-color: var(--brand-color) !important;
+  }
+
+  &.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background-color: var(--header-bg) !important;
+    border-color: var(--border-color) !important;
+    color: var(--secondary-color) !important;
   }
 
   &_main {
-    background-color: var(--primary-color);
-    border-color: var(--primary-color);
-    color: var(--bg-color);
+    background-color: var(--primary-color) !important;
+    border-color: var(--primary-color) !important;
+    color: var(--bg-color) !important;
 
-    &:hover {
-      background-color: var(--text-color); // Darker on hover for light theme
-      border-color: var(--text-color);
-      color: var(--bg-color);
+    &:hover,
+    &:focus,
+    &:active,
+    &.active {
+      background-color: var(--brand-color) !important;
+      border-color: var(--brand-color) !important;
+      color: var(--text-color) !important;
+    }
+    &.disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      background-color: var(--header-bg) !important;
+      border-color: var(--border-color) !important;
+      color: var(--secondary-color) !important;
     }
   }
 
   &_sub {
     background-color: transparent;
-    border-color: var(--secondary-color);
-    color: var(--secondary-color);
+    border-color: var(--secondary-color) !important;
+    color: var(--secondary-color) !important;
 
-    &:hover {
-      background-color: var(--secondary-color);
-      color: var(--bg-color);
+    &:hover,
+    &:focus,
+    &:active,
+    &.active {
+      background-color: var(--secondary-color) !important;
+      color: var(--bg-color) !important;
+    }
+    &.disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      background-color: var(--header-bg) !important;
+      border-color: var(--border-color) !important;
+      color: var(--secondary-color) !important;
     }
   }
 
   &_link {
-      color: var(--link-color);
-  text-decoration: underline;
-  &:hover {
-    color: var(--link-hover-color);
-    text-decoration: none;
+    color: var(--link-color);
+    text-decoration: underline;
+    &:hover {
+      color: var(--link-hover-color) !important;
+      text-decoration: none;
+    }
   }
-  }
+}
+
+/* 容器定位在右下角 */
+.fab-container {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  display: flex;
+  flex-direction: column; /* 關鍵：這會讓第一個元素在最下面 */
+  align-items: center;
+  z-index: 1000;
+}
+
+/* 主按鈕樣式 */
+.fab-main {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 24px;
+  transition:
+    transform 0.3s ease,
+    background-color 0.3s;
+}
+
+/* 子按鈕容器 */
+.fab-options {
+  display: flex;
+  flex-direction: column-reverse; /* 確保子按鈕也是由下往上堆疊 */
+  align-items: center;
+  pointer-events: none;
+}
+
+/* 子按鈕通用樣式 */
+.fab-child {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background-color: white;
+  color: #333;
+  margin-bottom: 15px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-decoration: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  font-size: 20px;
+
+  transform: scale(0) translateY(20px); /* 初始在下方一點點 */
+  opacity: 0;
+  transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+/* --- 展開後的狀態 --- */
+
+.fab-container.active .fab-options {
+  pointer-events: auto;
+}
+
+.fab-container.active .fab-child {
+  transform: scale(1) translateY(0); /* 回到原位 */
+  opacity: 1;
+  /* 根據 --i 變量產生延遲效果 */
+  transition-delay: calc(0.05s * var(--i));
+}
+
+/* 主按鈕變色與變叉叉 */
+.fab-container.active .fab-main {
+  background-color: var(--brand-color);
+  transform: rotate(135deg); /* 旋轉 135 度讓加號變成叉叉 */
 }

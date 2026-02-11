@@ -1,278 +1,341 @@
 const CART_KEY = "cart_items";
 
+// === 工具函式 ===
 function getQueryParam(name) {
   const urlParams = new URLSearchParams(window.location.search);
   return urlParams.get(name);
 }
 
 function loadProducts() {
-  return fetch("data/products.json")
+  // return fetch("data/products.json")
+  return fetch("https://script.google.com/macros/s/AKfycbxOpqHf4AB8UdCKM2ik2mQRLfx-3KhNEjL5iEwWcgxSTM2bEBRvgduY5yCRVIlRFHfB/exec?action=getProducts")
     .then(res => res.json())
-    .then(data => data);
+    .catch(err => console.error("無法讀取產品資料", err));
 }
 
-// 修正：增加判斷 value 是否存在，避免 crash
+function showToast(message) {
+  $(".selection-toast").remove(); // 避免多個吐司堆疊
+  const $toast = $(`<div class="selection-toast">${message}</div>`);
+  $("body").append($toast);
+  setTimeout(() => $toast.addClass("show"), 100);
+  setTimeout(() => {
+    $toast.removeClass("show");
+    setTimeout(() => $toast.remove(), 500);
+  }, 2500);
+}
+
+// 核心檢查函式：判斷該項目在當前已選狀態下是否可用
 function isOptionAvailable(item, selected) {
-  if (!item.availableWhen) return true;
+  if (item.status === 'coming_soon') return false;
+  if (!item || !item.availableWhen) return true;
+  
   return Object.entries(item.availableWhen).every(([key, values]) => {
-    // 如果依賴的選項還沒選 (null)，通常視為不符合，或視需求決定邏輯
     const currentVal = selected[key];
-    if (!currentVal) return false; 
-    return values.includes(currentVal);
+    // 瀑布流邏輯：如果依賴的上層項還沒選，下層視為不可用
+    if (!currentVal || (Array.isArray(currentVal) && currentVal.length === 0)) {
+      return false;
+    }
+    return values.includes(String(currentVal));
   });
 }
 
 function calcPrice(basePrice, selectedOptions, templates) {
   let price = basePrice;
-
   templates.forEach(t => {
-    // 處理單選邏輯 (Size, Material etc.)
-    t.items.forEach(item => {
-      if (selectedOptions[t.key] === item.value) {
-        if (item.price) price += item.price;
-      }
-    });
-
-    // 處理 Addon (多選) 邏輯
-    // 修正：不寫死 key="addon"，而是檢查 selectedOptions[t.key] 是否為陣列
-    const selectedVal = selectedOptions[t.key];
-    if (Array.isArray(selectedVal)) {
-        selectedVal.forEach(val => {
-            const foundItem = t.items.find(it => it.value === val);
-            if (foundItem && foundItem.price) price += foundItem.price;
-        });
+    const val = selectedOptions[t.key];
+    if (val && !Array.isArray(val)) {
+      const item = t.items.find(i => i.value === String(val));
+      if (item?.price) price += item.price;
+    }
+    if (Array.isArray(val)) {
+      val.forEach(v => {
+        const item = t.items.find(i => i.value === String(v));
+        if (item?.price) price += item.price;
+      });
     }
   });
-
   return price;
 }
 
+// === 主渲染函式 ===
 function renderProduct(product, templates) {
   const $area = $("#productArea");
-
-  // 1. 動態初始化 selected 物件
   let selected = {};
-  
-  // 處理顏色 (如果有)
   const colorKeys = Object.keys(product.images.colors || {});
-  if (colorKeys.length > 0) {
-      //selected.color = colorKeys[0]; // 預設選第一個顏色
-  }
 
-  // 處理 Templates 的預設值
+  // 初始化選擇狀態
   templates.forEach(t => {
-      // 假設 key 是 "addon" 或其他多選類型，初始化為陣列
-      if (t.key === "addon") { 
-          selected[t.key] = []; 
-      } else {
-          selected[t.key] = null; // 單選預設為 null
-      }
+    selected[t.key] = (t.type === "multi") ? [] : null;
   });
+  selected.color = null;
 
-  const getTemplateByKey = (key) => templates.find(t => t.key === key);
+  // 更新圖片輪播與側邊縮圖
+  function updateGallery(triggerSource = null) {
+    let activeImages = [product.images.main];
+    if (product.images.gallery) activeImages.push(...product.images.gallery);
+    if (selected.color && product.images.colors?.[selected.color]) {
+      activeImages.push(product.images.colors[selected.color]);
+    }
 
-  function updateUI() {
-    const $price = $("#priceValue");
-    const base = product.basePrice || 0;
-    const price = calcPrice(base, selected, templates);
-    $price.text(price);
-
-    // 更新選項按鈕狀態 (Disabled & Active)
+    let newlyAddedImg = null;
     templates.forEach(t => {
-      t.items.forEach(item => {
-        // 選取對應按鈕
-        const $el = $(`.optionBtn[data-key="${t.key}"][data-value="${item.value}"]`);
-        if (!$el.length) return;
+      const val = selected[t.key];
+      if (!val) return;
+      const getImg = (v) => t.items.find(i => i.value === String(v))?.image;
 
-        // 檢查可用性
-        const available = isOptionAvailable(item, selected);
-        $el.toggleClass("disabled", !available);
-        $el.prop("disabled", !available);
-
-        // [修正 UI] 檢查是否被選中 (Active 狀態)
-        const currentVal = selected[t.key];
-        let isActive = false;
-        if (Array.isArray(currentVal)) {
-            isActive = currentVal.includes(item.value);
-        } else {
-            isActive = currentVal === item.value;
-        }
-        
-        if (isActive) $el.addClass("active");
-        else $el.removeClass("active");
-      });
+      if (Array.isArray(val)) {
+        val.forEach(v => { 
+          const img = getImg(v); 
+          if (img) { activeImages.push(img); if (triggerSource === v) newlyAddedImg = img; } 
+        });
+      } else {
+        const img = getImg(val); 
+        if (img) { activeImages.push(img); if (triggerSource === String(val)) newlyAddedImg = img; }
+      }
     });
 
-    // 處理顏色按鈕 Active 狀態
-    if (selected.color) {
-        $(`.optionBtn[data-key="color"]`).removeClass("active");
-        $(`.optionBtn[data-key="color"][data-value="${selected.color}"]`).addClass("active");
-        
-        // 切換主圖
-        const imgSrc = product.images.colors[selected.color];
-        if (imgSrc) $("#mainImg").attr("src", imgSrc);
+    const $container = $("#galleryThumbnails");
+    $container.empty();
+    activeImages.forEach(src => {
+      const $thumb = $(`<img src="${src}" class="gallery-thumb ${$("#mainImg").attr("src") === src ? 'active' : ''}">`);
+      $thumb.on("click", function () {
+        $("#mainImg").attr("src", src);
+        $container.find("img").removeClass("active");
+        $(this).addClass("active")[0].scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+      });
+      $container.append($thumb);
+    });
+
+    // 若是因為點選選項而產生的新圖，自動切換主圖並捲動縮圖
+    if (newlyAddedImg) {
+      $("#mainImg").attr("src", newlyAddedImg);
+      setTimeout(() => {
+        const $target = $container.find(`img[src="${newlyAddedImg}"]`);
+        $container.find("img").removeClass("active");
+        if ($target.length) $target.addClass("active")[0].scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+      }, 50);
+    } else if (triggerSource === 'color' && selected.color) {
+      const cImg = product.images.colors[selected.color];
+      if (cImg) $("#mainImg").attr("src", cImg);
     }
   }
 
-  // 建構基本 HTML
-  const html = `
-    <div class="col-md-6">
-      <img id="mainImg" class="img-fluid rounded" src="${product.images.main}" alt="主圖">
-      <div class="mt-3 d-flex gap-2">
-        ${(product.images.gallery || []).map(g => `<img class="img-thumbnail" style="width:80px;cursor:pointer" src="${g}" />`).join("")}
-      </div>
-    </div>
+  // 瀑布流 UI 更新邏輯
+  function updateUI(triggerSource = null) {
+    let isPreviousStepCompleted = true; 
+    let conflictMessages = [];
 
-    <div class="col-md-6">
-      <h2>${product.name}</h2>
-      <p>${product.description || ""}</p>
+    templates.forEach((t, index) => {
+      const $section = $(`#section-${t.key}`);
+      const currentVal = selected[t.key];
 
-      <div class="mb-3">
-        <strong>價格：</strong>NT$ <span id="priceValue">${product.basePrice}</span>
-      </div>
+      // 1. 處理步驟鎖定 (Step Locking)
+      if (!isPreviousStepCompleted) {
+        $section.addClass('step-disabled');
+        selected[t.key] = (t.type === 'multi') ? [] : null;
+      } else {
+        $section.removeClass('step-disabled');
+      }
 
-      <div id="optionsArea"></div>
+      // 2. 檢查區塊內每個選項的可用性
+      let hasValidSelection = false;
+      t.items.forEach(item => {
+        const available = isOptionAvailable(item, selected);
+        const $el = (t.type === 'multi') 
+          ? $section.find(`input[value="${item.value}"]`)
+          : $section.find(`.optionBtn[data-value="${item.value}"]`);
 
-      <div class="d-flex align-items-center gap-2 my-3">
-        <button id="minusQty" class="btn btn-outline-secondary">-</button>
-        <input id="qty" type="number" class="form-control" value="1" style="width:80px;">
-        <button id="plusQty" class="btn btn-outline-secondary">+</button>
-      </div>
+        if (!available) {
+          $el.prop("disabled", true).addClass("disabled-item disabled");
+          if (t.type === 'multi') {
+            if (selected[t.key].includes(item.value)) {
+              selected[t.key] = selected[t.key].filter(v => v !== item.value);
+              conflictMessages.push(`加購項「${item.label}」已不適用`);
+            }
+            $el.prop("checked", false).closest('.form-check').addClass('opacity-50');
+          } else {
+            if (selected[t.key] === item.value) {
+              selected[t.key] = null;
+              conflictMessages.push(`「${item.label}」與現有規格衝突，請重新選擇`);
+            }
+            $el.removeClass("active btn-primary").addClass("btn-outline-primary");
+          }
+        } else {
+          $el.prop("disabled", false).removeClass("disabled-item disabled");
+          if (t.type === 'multi') {
+            $el.closest('.form-check').removeClass('opacity-50');
+            $el.prop("checked", selected[t.key].includes(item.value));
+            if (selected[t.key].length > 0) hasValidSelection = true;
+          } else {
+            const isActive = selected[t.key] === item.value;
+            $el.toggleClass("active btn-primary", isActive).toggleClass("btn-outline-primary", !isActive);
+            if (isActive) hasValidSelection = true;
+          }
+        }
+      });
 
-      <button id="addToCart" class="btn btn-primary">加入購物車</button>
-    </div>
-  `;
+      // 3. 判斷是否開啟下一步
+      if (t.required && !hasValidSelection) {
+        isPreviousStepCompleted = false;
+      }
+    });
 
-  $area.html(html);
+    // 處理顏色按鈕樣式 (顏色通常獨立於瀑布流)
+    $(`.optionBtn[data-key="color"]`).each(function() {
+      const isAct = selected.color === $(this).data("value");
+      $(this).toggleClass("active btn-primary", isAct).toggleClass("btn-outline-secondary", !isAct);
+    });
 
-  // Gallery 點擊
-  $("#productArea img.img-thumbnail").on("click", function () {
-    $("#mainImg").attr("src", $(this).attr("src"));
-  });
+    // 顯示衝突警告
+    if (conflictMessages.length > 0) {
+      showToast(conflictMessages[0]);
+    }
 
-  // Render Templates Options
-  const $optArea = $("#optionsArea");
-  
-  // 先把顏色 Render 進去 (如果在上方定義了 colorArea 變數)
-  if (colorKeys.length) {
-    const colorArea = `
-      <div class="mb-3">
-        <strong>顏色</strong>
-        <div>
-          ${colorKeys.map(c => `
-            <button class="btn btn-outline-secondary m-1 optionBtn"
-                    data-key="color" data-value="${c}">
-              ${c}
-            </button>
-          `).join("")}
-        </div>
-      </div>`;
-    $optArea.append(colorArea); // 用 append 順序比較直觀，或者依照設計稿 prepend
+    $("#priceValue").text(calcPrice(product.basePrice || 0, selected, templates));
+    updateGallery(triggerSource);
   }
 
-  templates.forEach(t => {
-    const itemsHtml = t.items.map(item => {
-      const img = item.image ? `<img src="${item.image}" style="width:30px; height:30px; object-fit:cover; margin-right:8px;">` : "";
-      return `
-        <button class="btn btn-outline-primary m-1 optionBtn"
-                data-key="${t.key}" data-value="${item.value}">
-          ${img}${item.label}
-        </button>
-      `;
-    }).join("");
+  // 生成 HTML 結構
+  const html = `
+    <div class="col-md-6">
+      <div class="sticky-top" style="top: 20px; z-index: 1;">
+          <img id="mainImg" class="img-fluid rounded mb-3 w-100" style="object-fit: contain; max-height: 500px; background: #f8f9fa; border: 1px solid #eee;" src="${product.images.main}">
+          <div id="galleryThumbnails" class="gallery-scroll-container d-flex overflow-auto pb-2"></div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <h2 class="mt-4 mt-md-0 fw-bold">${product.name}</h2>
+      <p class="text-muted">${product.description || ""}</p>
+      <div class="h4 mb-4 text-primary fw-bold">NT$ <span id="priceValue">${product.basePrice}</span></div>
+      <div id="optionsArea"></div>
+      <hr class="my-4">
+      <div class="d-flex align-items-center gap-3 mb-4">
+        <label class="fw-bold">數量</label>
+        <div class="input-group" style="width: 140px;">
+            <button id="minusQty" class="btn btn-outline-secondary">-</button>
+            <input id="qty" type="number" class="form-control text-center" value="1" min="1">
+            <button id="plusQty" class="btn btn-outline-secondary">+</button>
+        </div>
+      </div>
+      <button id="addToCart" class="btn btn-primary btn-lg w-100 py-3 fw-bold">加入購物車</button>
+    </div>
+  `;
+  $area.html(html);
 
-    const requiredMark = t.required ? "（必填）" : "（選填）";
-
+  const $optArea = $("#optionsArea");
+  
+  // 渲染顏色 (如有)
+  if (colorKeys.length) {
     $optArea.append(`
-      <div class="mb-3">
-        <div><strong>${t.label}</strong> ${requiredMark}</div>
-        <div>${itemsHtml}</div>
+      <div class="option-section mb-4" id="section-color">
+        <div class="mb-2 fw-bold">選擇顏色 <span class="text-danger">*</span></div>
+        <div class="d-flex flex-wrap gap-2">
+          ${colorKeys.map(c => `<button class="btn btn-outline-secondary optionBtn" data-key="color" data-value="${c}">${c}</button>`).join("")}
+        </div>
+      </div>
+    `);
+  }
+
+  // 渲染瀑布流選項
+  templates.forEach((t, index) => {
+    const req = t.required ? "<span class='text-danger'>*</span>" : "";
+    let input = (t.type === 'multi')
+      ? t.items.map(item => `
+          <div class="form-check mb-2">
+            <input class="form-check-input addonCheckbox" type="checkbox" value="${item.value}" data-key="${t.key}" id="o_${t.key}_${item.value}">
+            <label class="form-check-label" for="o_${t.key}_${item.value}">${item.label} ${item.price ? `(+NT$${item.price})` : ''}</label>
+          </div>`).join("")
+      : `<div class="d-flex flex-wrap gap-2">${t.items.map(item => `<button class="btn btn-outline-primary optionBtn" data-key="${t.key}" data-value="${item.value}">${item.label}</button>`).join("")}</div>`;
+    
+    $optArea.append(`
+      <div class="option-section mb-4" id="section-${t.key}" data-step="${index}">
+        <div class="fw-bold mb-2">${t.label} ${req}</div>
+        <div>${input}</div>
       </div>
     `);
   });
 
-  // [修正 1] 選項按鈕點擊 (使用 Event Delegation 解決動態元素綁定問題)
+  // === 事件綁定 ===
+  
+  // 選項按鈕點擊 (包含顏色與單選規格)
   $optArea.on("click", ".optionBtn", function () {
-    const key = $(this).data("key");
-    const value = $(this).data("value");
-
-    // 處理多選 (Array) vs 單選
-    if (Array.isArray(selected[key])) {
-      const idx = selected[key].indexOf(value);
-      if (idx === -1) selected[key].push(value);
-      else selected[key].splice(idx, 1);
+    const $btn = $(this);
+    if ($btn.hasClass('disabled') || $btn.closest('.option-section').hasClass('step-disabled')) return;
+    
+    const key = $btn.data("key");
+    const val = String($btn.data("value")); // 強制轉字串避免比對錯誤
+    
+    if (key === 'color') {
+      selected.color = (selected.color === val) ? null : val;
+      updateUI('color');
     } else {
-      // 處理單選 (包含 Color 和其他)
-      // 如果點擊已選中的按鈕，是否允許取消？(通常必填的不允許，選填的允許，這裡先簡化為直接覆蓋)
-      selected[key] = value;
+      selected[key] = (selected[key] === val) ? null : val;
+      updateUI(val);
     }
+  });
 
-    // 呼叫 updateUI 來統一處理 Active Class 和 價格計算
-    updateUI();
+  // 多選複選框變更
+  $optArea.on("change", ".addonCheckbox", function () {
+    const $cb = $(this);
+    const key = $cb.data("key");
+    const val = String($cb.val());
+
+    if (!Array.isArray(selected[key])) selected[key] = [];
+    if ($cb.is(":checked")) {
+      selected[key].push(val);
+      updateUI(val);
+    } else {
+      selected[key] = selected[key].filter(v => v !== val);
+      updateUI(null);
+    }
   });
 
   // 數量控制
-  $("#minusQty").on("click", () => {
-    const v = parseInt($("#qty").val()) || 1;
-    $("#qty").val(Math.max(1, v - 1));
-  });
-  $("#plusQty").on("click", () => {
-    const v = parseInt($("#qty").val()) || 1;
-    $("#qty").val(v + 1);
-  });
+  $("#minusQty").on("click", () => { const $q = $("#qty"); $q.val(Math.max(1, (parseInt($q.val()) || 1) - 1)); });
+  $("#plusQty").on("click", () => { const $q = $("#qty"); $q.val((parseInt($q.val()) || 1) + 1); });
 
   // 加入購物車
   $("#addToCart").on("click", () => {
-    const qty = parseInt($("#qty").val()) || 1;
-
-    // [修正 3] 檢查必填邏輯更嚴謹
+    if (colorKeys.length > 0 && !selected.color) {
+      showToast("請選擇顏色");
+      $("#section-color")[0].scrollIntoView({ behavior: "smooth", block: "center" });
+      return;
+    }
     for (let t of templates) {
       if (t.required) {
-          const val = selected[t.key];
-          // 如果是陣列 (addon)，檢查長度是否為 0
-          if (Array.isArray(val)) {
-              if (val.length === 0) {
-                  alert(`請選擇 ${t.label}`);
-                  return;
-              }
-          } 
-          // 如果是單選 (null/undefined/empty string)
-          else if (!val) {
-              alert(`請選擇 ${t.label}`);
-              return;
-          }
+        const v = selected[t.key];
+        if (!v || (Array.isArray(v) && v.length === 0)) {
+          showToast(`請選擇 ${t.label}`);
+          $(`#section-${t.key}`)[0].scrollIntoView({ behavior: "smooth", block: "center" });
+          return;
+        }
       }
     }
 
     const cart = JSON.parse(localStorage.getItem(CART_KEY) || "[]");
     cart.push({
-      productId: product.id,
+      productId: product.id, 
       name: product.name,
-      selected: JSON.parse(JSON.stringify(selected)), // Deep copy 避免參考問題
+      selected: JSON.parse(JSON.stringify(selected)),
       unitPrice: calcPrice(product.basePrice, selected, templates),
-      qty
+      qty: parseInt($("#qty").val()) || 1
     });
     localStorage.setItem(CART_KEY, JSON.stringify(cart));
-
     alert("已加入購物車！");
   });
 
-  // 初始 UI 更新 (讓預設值有樣式)
   updateUI();
 }
 
+// 頁面初始化
 $(async () => {
   const productId = getQueryParam("id");
-  if(!productId) return; // 簡單防呆
-
   const data = await loadProducts();
+  if (!productId || !data) return;
   const product = data.products.find(p => p.id === productId);
+  if (!product) return $("#productArea").html("<div class='container text-center py-5'><h3>找不到商品</h3></div>");
   
-  if (!product) {
-    $("#productArea").html("<div class='text-danger'>找不到商品</div>");
-    return;
-  }
-
-  const templates = product.optionTemplateRefs.map(ref => data.optionTemplates[ref]);
-  renderProduct(product, templates);
+  // 依照產品定義的 Template 順序載入
+  const templateObjects = product.optionTemplateRefs.map(ref => data.optionTemplates[ref]);
+  renderProduct(product, templateObjects);
 });
