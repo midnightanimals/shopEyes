@@ -1,19 +1,35 @@
 $(async () => {
   let allProducts = []; // 用來儲存原始完整資料
 
-  // 1. 取得資料
-  try {
-    const res = await fetch("data/products.json");
-    const data = await res.json();
-    allProducts = data.products;
+  // === 頁面初始化入口 ===
+  async function initCatalog() {
+    // 1. 開啟 Loading 畫面
+    toggleLoading(true, "fetching");
 
-    // 2. 初始化畫面
-    initTabs(allProducts);      // 產生分類按鈕
-    renderProducts(allProducts); // 預設渲染全部商品
+    try {
+      // 2. 取得 GAS 資料
+      // 注意：確保你在全域變數中已定義 GAS_ENDPOINT
+      const res = await fetch(`${GAS_ENDPOINT}?action=getProducts`);
+      const data = await res.json();
+      
+      // 檢查資料結構
+      if (!data || !data.products) {
+        throw new Error("資料格式不正確");
+      }
 
-  } catch (error) {
-    console.error("載入產品資料失敗:", error);
-    $("#catalogGrid").html('<div class="col-12 text-center">載入失敗，請稍後再試。</div>');
+      allProducts = data.products;
+
+      // 3. 初始化畫面
+      initTabs(allProducts);      // 產生分類按鈕
+      renderProducts(allProducts); // 預設渲染全部商品
+
+    } catch (error) {
+      console.error("載入產品資料失敗:", error);
+      $("#catalogGrid").html('<div class="col-12 text-center py-5">載入失敗，請稍後再試。</div>');
+    } finally {
+      // 4. 無論成功或失敗，關閉 Loading (延遲一點讓圖片載入更平順)
+      setTimeout(() => toggleLoading(false), 300);
+    }
   }
 
   // === 核心功能函式 ===
@@ -25,27 +41,24 @@ $(async () => {
     const $tabContainer = $("#categoryTabs");
     
     // 找出所有不重複的 category
-    // .filter(Boolean) 是為了過濾掉沒有填寫 category 的商品，避免出現 null 或 undefined
     const categories = [...new Set(products.map(p => p.category).filter(Boolean))];
 
-    // 先加入「全部」按鈕 (預設 active)
+    // 分類翻譯對照表
+    const categoryNameMap = {
+      "eyes": "眼珠",
+      "ears": "獸耳",
+      "accessory": "配件"
+    };
+
+    // 先加入「全部」按鈕
     let tabsHtml = `
       <li class="nav-item">
         <button class="nav-link active" data-category="all">全部</button>
       </li>
     `;
 
-    // 產生其他分類按鈕
-    // 這裡我們簡單做個字典翻譯，讓顯示的文字比較好看 (可選)
-    const categoryNameMap = {
-      "eyes": "眼珠",
-      "ears": "獸耳",
-      "accessory": "配件"
-      // 如果遇到沒定義的 key，程式會直接顯示英文原文
-    };
-
     categories.forEach(cat => {
-      const displayName = categoryNameMap[cat] || cat; // 有翻譯就用翻譯，沒有就用原文
+      const displayName = categoryNameMap[cat] || cat;
       tabsHtml += `
         <li class="nav-item">
           <button class="nav-link" data-category="${cat}">${displayName}</button>
@@ -55,33 +68,26 @@ $(async () => {
 
     $tabContainer.html(tabsHtml);
 
-    // 綁定 Tab 點擊事件
-    $tabContainer.on("click", ".nav-link", function() {
-      // 1. 處理按鈕樣式切換
+    // 綁定 Tab 點擊事件 (使用事件委派)
+    $tabContainer.off("click").on("click", ".nav-link", function() {
       $(".nav-link").removeClass("active");
       $(this).addClass("active");
 
-      // 2. 篩選資料
       const targetCat = $(this).data("category");
-      let filteredProducts = [];
+      let filteredProducts = (targetCat === "all") 
+        ? allProducts 
+        : allProducts.filter(p => p.category === targetCat);
 
-      if (targetCat === "all") {
-        filteredProducts = allProducts;
-      } else {
-        filteredProducts = allProducts.filter(p => p.category === targetCat);
-      }
-
-      // 3. 重新渲染
       renderProducts(filteredProducts);
     });
   }
 
   /**
-   * 渲染商品卡片 (包含重置動畫)
+   * 渲染商品卡片
    */
   function renderProducts(products) {
     const $grid = $("#catalogGrid");
-    $grid.empty(); // 清空目前的內容
+    $grid.empty();
 
     if (products.length === 0) {
       $grid.html('<div class="col-12 text-center text-muted py-5">此分類暫無商品</div>');
@@ -89,18 +95,22 @@ $(async () => {
     }
 
     products.forEach(p => {
-      // 為了配合動畫，product-card 預設在 CSS 應該要是 opacity: 0; transform: translateY(20px);
-      // JS 加入 .show 後才會浮現
+      // 確保圖片路徑正確，若沒設定圖片給予預設圖
+      const mainImg = p.images?.main || 'img/default-product.jpg';
+      const desc = p.description ? p.description.substring(0, 30) + '...' : '暫無商品描述';
+      
       const html = `
-        <div class="col-12 col-sm-6 col-md-4 col-lg-3">
+        <div class="col-12 col-sm-6 col-md-4 col-lg-3 mb-4">
           <a href="product.html?id=${p.id}" class="text-decoration-none">
-            <div class="product-card">
-              <img src="${p.images.main}" class="card-img-top" alt="${p.name}">
+            <div class="product-card h-100">
+              <div class="card-img-wrapper">
+                 <img src="${mainImg}" class="card-img-top" alt="${p.name}" loading="lazy">
+              </div>
               <div class="card-body">
-                <div class="card-title">${p.name}</div>
-                <p class="card-text">${p.description ? p.description.substring(0, 100) : ''}...</p>
-                <div class="card-price">$${p.basePrice}</div>
-                <button class="btn btn_main">查看詳情</button>
+                <div class="card-title fw-bold text-dark">${p.name}</div>
+                <p class="card-text text-muted small">${desc}</p>
+                <div class="card-price text-primary fw-bold">NT$ ${p.basePrice || 0} 起</div>
+                <button class="btn btn_main btn-sm w-100 mt-2">查看詳情</button>
               </div>
             </div>
           </a>
@@ -109,7 +119,7 @@ $(async () => {
       $grid.append(html);
     });
 
-    // 重新啟動動畫觀察器 (因為 DOM 元素是新產生的)
+    // 啟動動畫觀察器
     initScrollAnimation();
   }
 
@@ -134,4 +144,7 @@ $(async () => {
     const cards = document.querySelectorAll('.product-card');
     cards.forEach(card => observer.observe(card));
   }
+
+  // 啟動頁面
+  initCatalog();
 });

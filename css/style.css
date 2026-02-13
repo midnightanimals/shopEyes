@@ -6,7 +6,8 @@
   --secondary-text-color: #666666;
   --primary-color: #222222;
   --secondary-color: #888888;
-  --brand-color: #D7BE8A;
+  --brand-color: #d7be8a;
+  --brand-color-dark: #b89d63;
   --accent-color: #333333;
   --border-color: #e0e0e0;
   --header-bg: rgba(255, 255, 255, 0.7);
@@ -72,6 +73,10 @@ a {
 a:hover {
   color: var(--link-hover-color);
   text-decoration: none;
+}
+
+.text_color {
+  color: var(--brand-color-dark);
 }
 
 .site-header {
@@ -210,12 +215,12 @@ a:hover {
 }
 .btn_sub {
   background-color: transparent;
-  border-color: var(--secondary-color) !important;
-  color: var(--secondary-color) !important;
+  border-color: var(--border-color) !important;
+  color: var(--text-color) !important;
 }
 .btn_sub:hover, .btn_sub:focus, .btn_sub:active, .btn_sub.active {
-  background-color: var(--secondary-color) !important;
-  color: var(--bg-color) !important;
+  background-color: var(--brand-color) !important;
+  color: var(--text-color) !important;
 }
 .btn_sub.disabled {
   opacity: 0.5;
@@ -674,6 +679,48 @@ a:hover {
 .shake {
   -webkit-animation: shake 0.4s ease-in-out;
           animation: shake 0.4s ease-in-out;
+}
+
+/* 自訂彈窗樣式 */
+.fairy-alert-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 10000;
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-pack: center;
+      -ms-flex-pack: center;
+          justify-content: center;
+  -webkit-box-align: center;
+      -ms-flex-align: center;
+          align-items: center;
+  backdrop-filter: blur(3px);
+}
+.fairy-alert-box {
+  background: white;
+  border-radius: 15px;
+  padding: 30px;
+  width: 95%;
+  max-width: 450px;
+  text-align: center;
+  -webkit-box-shadow: 0 15px 35px rgba(0, 0, 0, 0.25);
+          box-shadow: 0 15px 35px rgba(0, 0, 0, 0.25);
+  -webkit-transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.fairy-alert-box.show {
+  -webkit-transform: translateY(0);
+          transform: translateY(0);
+  opacity: 1;
+}
+.fairy-alert-icon {
+  font-size: 1rem;
+  margin-bottom: 15px;
 }
 
 .admin-product-item {

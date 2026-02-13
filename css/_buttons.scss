@@ -52,15 +52,15 @@
 
   &_sub {
     background-color: transparent;
-    border-color: var(--secondary-color) !important;
-    color: var(--secondary-color) !important;
+    border-color: var(--border-color) !important;
+    color: var(--text-color) !important;
 
     &:hover,
     &:focus,
     &:active,
     &.active {
-      background-color: var(--secondary-color) !important;
-      color: var(--bg-color) !important;
+      background-color: var(--brand-color) !important;
+      color: var(--text-color) !important;
     }
     &.disabled {
       opacity: 0.5;

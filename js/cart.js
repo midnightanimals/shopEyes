@@ -11,16 +11,19 @@ const SHIPPING_OPTIONS = [
   { id: "home", label: "宅配", fee: 120 }
 ];
 
-const GAS_ENDPOINT = "https://script.google.com/macros/s/AKfycbxOpqHf4AB8UdCKM2ik2mQRLfx-3KhNEjL5iEwWcgxSTM2bEBRvgduY5yCRVIlRFHfB/exec?action=list";
-
-
 /* =====================
    工具函式
 ===================== */
+
+// 改為讀取 GAS 資料，確保能拿到最新的 optionTemplates 來做翻譯
 function loadProducts() {
-  return fetch("data/products.json")
+  // return fetch("data/products.json")
+  return fetch(`${GAS_ENDPOINT}?action=getProducts`)
     .then(r => r.json())
-    .catch(() => null);
+    .catch(err => {
+      console.error("載入失敗", err);
+      return null;
+    });
 }
 
 function getCart() {
@@ -35,12 +38,66 @@ function calcTotal(cart) {
   return cart.reduce((sum, i) => sum + i.unitPrice * i.qty, 0);
 }
 
+/**
+ * ★ 新增功能：合併購物車中重複的商品
+ * 判斷標準：ID 相同 且 所有選擇的規格(selected) 都相同
+ */
+function compactCart(cartItems) {
+  const merged = [];
+
+  cartItems.forEach(item => {
+    // 尋找 merged 陣列中是否已經有「長得一模一樣」的商品
+    const existingItem = merged.find(m =>
+      m.productId === item.productId &&
+      JSON.stringify(m.selected) === JSON.stringify(item.selected)
+    );
+
+    if (existingItem) {
+      // 如果有，就疊加數量
+      existingItem.qty += parseInt(item.qty || 1);
+    } else {
+      // 如果沒有，就加入新的一行
+      merged.push(item);
+    }
+  });
+
+  return merged;
+}
+
+/**
+ * ★ 核心功能：將規格代碼 (Value) 轉為顯示名稱 (Label)
+ */
+function getOptionLabel(key, val, data) {
+  if (!val) return "";
+  if (key === 'color') return val; // 顏色通常直接顯示值，除非另外定義翻譯
+
+  // 1. 遍歷所有的 Templates 尋找符合 logical_key (例如 "size") 的設定檔
+  // data.optionTemplates 是物件，我們用 Object.values 轉成陣列來找
+  const template = Object.values(data.optionTemplates || {}).find(t => t.key === key);
+
+  // 找不到設定檔就直接回傳原始值 (容錯)
+  if (!template) return val;
+
+  // 2. 內部轉換函式：給定 value 找出 item.label
+  const findLabel = (v) => {
+    const item = template.items.find(i => String(i.value) === String(v));
+    return item ? item.label : v;
+  };
+
+  // 3. 處理陣列 (多選) 或 單一值
+  if (Array.isArray(val)) {
+    return val.map(findLabel).join("、");
+  }
+  return findLabel(val);
+}
 
 /* =====================
    寄送方式
 ===================== */
 function initShippingOptions() {
   const $sel = $("#shippingMethod");
+  $sel.empty(); // 清空避免重複
+  $sel.append('<option value="" disabled selected>請選擇寄送方式...</option>'); // 加入預設選項
   SHIPPING_OPTIONS.forEach(o => {
     $sel.append(
       `<option value="${o.id}">
@@ -50,44 +107,29 @@ function initShippingOptions() {
   });
 }
 
-
 /* =====================
-   規格顯示
+   規格文字產生 (用於畫面與訂單)
 ===================== */
 function formatSpecs(item, productData) {
   if (!item.selected) return "";
 
   const specs = [];
-  const templates = productData.optionTemplates || {};
 
+  // 遍歷每一個已選的規格 (key: "size", val: "regular")
   for (const [key, val] of Object.entries(item.selected)) {
-    const tKey = key === "addons" ? "addon" : key;
-    const tpl = Object.values(templates).find(t => t.key === tKey);
-    const title = tpl ? tpl.label : key;
+    // 忽略空值
+    if (val === null || val === undefined || (Array.isArray(val) && val.length === 0)) continue;
 
-    if (Array.isArray(val)) {
-      specs.push(`${title}：${val.join("、")}`);
-    } else if (val) {
-      specs.push(`${title}：${val}`);
-    }
+    // 1. 取得該規格的標題 (例如 "選擇尺寸")
+    const template = Object.values(productData.optionTemplates || {}).find(t => t.key === key);
+    const title = template ? template.label : key;
+
+    // 2. 取得該選項的顯示名稱 (例如 "一般尺寸")
+    const displayValue = getOptionLabel(key, val, productData);
+
+    specs.push(`${title}：${displayValue}`);
   }
   return specs.join(" | ");
-}
-
-/* =====================
-   Loading 控制
-===================== */
-function toggleLoading(show) {
-  if (show) {
-    $('body').append(`
-      <div id="loadingOverlay" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);display:flex;justify-content:center;align-items:center;z-index:9999;color:white;flex-direction:column;">
-        <div class="spinner-border text-light" role="status"></div>
-        <div class="mt-2">訂單傳送中，請稍候...</div>
-      </div>
-    `);
-  } else {
-    $('#loadingOverlay').remove();
-  }
 }
 
 /* =====================
@@ -105,7 +147,7 @@ function buildOrderText(cart, productData, shipping) {
 
   cart.forEach((item, i) => {
     text += `${i + 1}. ${item.name}\n`;
-    text += `   規格：${formatSpecs(item, productData)}\n`;
+    text += `   規格：${formatSpecs(item, productData)}\n`; // 這裡會自動用到 label 轉換
     text += `   單價：NT$ ${item.unitPrice}\n`;
     text += `   數量：${item.qty}\n`;
     text += `   小計：NT$ ${item.unitPrice * item.qty}\n`;
@@ -121,46 +163,49 @@ function buildOrderText(cart, productData, shipping) {
   return { orderNo, text, total };
 }
 
-
 /* =====================
    畫面渲染
 ===================== */
 function renderCart(productData) {
-  const cart = getCart();
+  const cart = getCart(); // 此時的 cart 應該已經是合併過的
   const $area = $("#cartArea");
   $area.empty();
 
   if (!cart.length) {
     $area.html(`<div class="py-5 text-center text-muted">購物車目前沒有商品。</div>`);
-    $("#sendOrder").prop("disabled", true); // 沒東西就停用
+    $("#sendOrder").prop("disabled", true);
+    $("#buildOrder").prop("disabled", true);
+    // 更新總計為 0
+    $(".cart-total-area").remove();
     return;
   }
 
-  $("#sendOrder").prop("disabled", false); // 有東西就啟用
+  $("#sendOrder").prop("disabled", false);
   $("#buildOrder").prop("disabled", false);
 
   cart.forEach((item, idx) => {
-    const product = productData.products.find(p => p.id === item.productId);
+    // 這裡使用 formatSpecs，確保畫面顯示的是 Label
+    const specHtml = formatSpecs(item, productData);
 
     $area.append(`
-      <div class="card mb-3 shadow-sm">
+      <div class="card mb-3 shadow-sm border-0 bg-light">
         <div class="card-body">
-          <div class="d-flex justify-content-between">
-            <div>
-              <h5>${item.name}</h5>
-              <div class="small text-muted">${formatSpecs(item, productData)}</div>
+          <div class="d-flex justify-content-between align-items-start">
+            <div class="me-3">
+              <h5 class="fw-bold mb-1">${item.name}</h5>
+              <div class="small text-muted mb-2">${specHtml}</div>
             </div>
-            <button class="btn-close remove" data-i="${idx}"></button>
+            <button class="btn-close remove" data-i="${idx}" aria-label="移除"></button>
           </div>
 
-          <div class="d-flex justify-content-between align-items-center mt-3">
-            <div>
-              <button class="btn btn-sm btn-outline-secondary minus" data-i="${idx}">-</button>
-              <input class="qty-input mx-1 text-center" data-i="${idx}" type="number" value="${item.qty}" style="width:60px">
-              <button class="btn btn-sm btn-outline-secondary plus" data-i="${idx}">+</button>
+          <div class="d-flex justify-content-between align-items-center mt-2">
+            <div class="input-group input-group-sm" style="width: 110px;">
+              <button class="btn btn-outline-secondary minus" data-i="${idx}">-</button>
+              <input class="form-control text-center qty-input" data-i="${idx}" inputmode="numeric" value="${item.qty}" min="1">
+              <button class="btn btn-outline-secondary plus" data-i="${idx}">+</button>
             </div>
             <div class="fw-bold text-primary">
-              NT$ ${item.unitPrice * item.qty}
+              NT$ ${(item.unitPrice * item.qty).toLocaleString()}
             </div>
           </div>
         </div>
@@ -168,22 +213,41 @@ function renderCart(productData) {
     `);
   });
 
-  $area.append(`<div class="text-end mt-4"><h4>總計：NT$ ${calcTotal(cart)}</h4></div>`);
+  // 總計區域
+  $area.append(`
+    <div class="cart-total-area text-end mt-4 pt-3 border-top">
+      <h4 class="fw-bold">總計：NT$ ${calcTotal(cart).toLocaleString()}</h4>
+    </div>
+  `);
 }
-
 
 /* =====================
    初始化與事件
 ===================== */
 $(async function () {
+  toggleLoading(true, "fetching");
+
   const productData = await loadProducts();
-  if (!productData) return alert("商品資料載入失敗");
+
+  if (!productData) {
+    toggleLoading(false);
+    return $("#cartArea").html('<div class="text-center py-5">資料載入錯誤，請重新整理頁面。</div>');
+  }
+
+  // ★ 關鍵：載入頁面時，立刻對購物車進行「合併整理」並存回 LocalStorage
+  // 這樣之後的操作都能基於整潔的資料進行
+  let rawCart = getCart();
+  let cleanCart = compactCart(rawCart);
+  saveCart(cleanCart);
 
   initShippingOptions();
   renderCart(productData);
 
+  toggleLoading(false);
+
   let latestOrder = null;
 
+  // 數量加減與移除事件 (使用 delegate)
   $("#cartArea")
     .on("click", ".plus, .minus", function () {
       const idx = $(this).data("i");
@@ -196,61 +260,126 @@ $(async function () {
     .on("change", ".qty-input", function () {
       const idx = $(this).data("i");
       const cart = getCart();
-      cart[idx].qty = Math.max(1, parseInt(this.value) || 1);
+      const newQty = parseInt(this.value);
+      cart[idx].qty = (isNaN(newQty) || newQty < 1) ? 1 : newQty; // 防止輸入 0 或負數
       saveCart(cart);
       renderCart(productData);
     })
-    .on("click", ".remove", function () {
-      if (!confirm("確定刪除商品？")) return;
-      const cart = getCart();
-      cart.splice($(this).data("i"), 1);
-      saveCart(cart);
-      renderCart(productData);
-    });
+.on("click", ".remove", function () {
+    // 1. 先把 index 存起來，因為進入 callback 後 $(this) 會抓不到
+    const targetIndex = $(this).data("i");
 
+    // 2. 呼叫小精靈彈窗
+    fairyModal({
+        type: "warning",
+        message: "確定要將此商品移出購物車嗎？<br/>小精靈會捨不得喔！( ;´Д`)ノ",
+        buttons: [
+            { 
+                text: "先不要", 
+                class: "btn_sub" 
+            },
+            { 
+                text: "確定移除", 
+                class: "btn_main", 
+                onClick: function() {
+                    // 原本寫在 confirm 下方的邏輯全部搬到這裡
+                    const cart = getCart();
+                    cart.splice(targetIndex, 1);
+                    saveCart(cart);
+                    renderCart(productData);
+                    
+                    // (加碼) 移除後的成功通知
+                    fairyModal({ type: "success", message: "商品已成功移出倉庫囉！" });
+                } 
+            }
+        ]
+    });
+});
+
+  // 產生訂單預覽
   $("#buildOrder").on("click", () => {
     const cart = getCart();
     const shipId = $("#shippingMethod").val();
-    if (!shipId) return alert("請先選擇寄送方式");
+if (!shipId) {
+    fairyModal({
+        type: "info",
+        message: "請先選擇寄送方式，小精靈才不會迷路喔！<br/>🧭✨",
+        buttons: [{
+            text: "這就去選",
+            class: "btn_main",
+            onClick: function() {
+                // 當使用者按下彈窗按鈕時，自動聚焦到該欄位
+                $("#shippingMethod").focus();
+            }
+        }]
+    });
+    
+    // 雖然彈窗是異步的，但我們必須在這裡 return 
+    // 這樣下方的「送出訂單 API」才不會被執行
+    return;
+}
 
     const shipping = SHIPPING_OPTIONS.find(s => s.id === shipId);
     latestOrder = buildOrderText(cart, productData, shipping);
 
     $("#orderText").text(latestOrder.text);
     $("#orderPreview").removeClass("d-none");
-    $("#sendOrder").prop("disabled", false);
+
+    // 捲動到預覽區
+    $("#orderPreview")[0].scrollIntoView({ behavior: 'smooth' });
   });
 
+  // 複製訂單
   $("#copyOrder").on("click", async () => {
-    await navigator.clipboard.writeText(latestOrder.text);
-    alert("訂單內容已複製");
+    if (!latestOrder) return;
+    try {
+      await navigator.clipboard.writeText(latestOrder.text);
+      // 簡單的視覺回饋
+      const $btn = $("#copyOrder");
+      const originalText = $btn.text();
+      $btn.text("已複製！").addClass("btn-success").removeClass("btn-secondary");
+      setTimeout(() => {
+        $btn.text(originalText).addClass("btn-secondary").removeClass("btn-success");
+      }, 2000);
+    } catch (err) {
+      alert("複製失敗，請手動選取文字複製");
+    }
   });
 
-  /* =====================
-     修改後的發送事件 (確保在 $(async function()...) 內)
-  ===================== */
+  // 送出訂單
   $("#sendOrder").on("click", async function () {
     const cart = getCart();
     const shipId = $("#shippingMethod").val();
     const email = $("#ccEmail").val().trim();
 
     // 1. 基本檢查
-    if (cart.length === 0) return alert("購物車是空的");
-    if (!shipId) return alert("請選擇寄送方式");
-    if (!email) return alert("請填寫 Email 以便接收確認信");
+    // 情境：購物車為空、未選寄送方式、未填 Email
+    if (cart.length === 0) {
+      fairyModal({ type: "warning", message: "購物車空空的，小精靈沒東西可以搬呀！" });
+      return; // 記得還是要 return，防止後續程式執行
+    }
+    if (!shipId) {
+      fairyModal({ type: "info", message: "請先選擇寄送方式，小精靈才不會迷路喔！" });
+      return;
+    }
+
+    if (!email) {
+      fairyModal({ type: "info", message: "請填寫 Email，以便小精靈把確認信飛鴿傳書給您！" });
+      return;
+    }
 
     // 2. 顯示 Loading
-    toggleLoading(true);
+    toggleLoading(true, "fetching");
 
     try {
       // 3. 取得寄送設定
       const shipping = SHIPPING_OPTIONS.find(s => s.id === shipId);
 
-      // 4. 重要：在這裡直接產生訂單內容 (這裡定義了 orderData)
-      // 注意：productData 必須是在 $(async function() {...}) 頂部定義過的
+      // 4. 產生訂單資料
+      // 注意：這裡傳入 productData，確保產生的文字包含正確的 Label
       const orderData = buildOrderText(cart, productData, shipping);
 
-      // 5. 封裝要傳給 Google Sheet 的資料
+      // 5. 封裝 Payload
       const payload = {
         orderNo: orderData.orderNo,
         createdAt: new Date().toLocaleString("zh-TW"),
@@ -258,13 +387,10 @@ $(async function () {
         shipping: `${shipping.label}（NT$${shipping.fee}）`,
         total: orderData.total,
         itemsText: orderData.text,
-
-        // ★ 新增這行：把原始購物車陣列轉成字串傳送出去
-        itemsJson: JSON.stringify(cart)
+        itemsJson: JSON.stringify(cart) // 備份原始資料
       };
 
       // 6. 發送至 GAS
-      // 使用 fetch 搭配 'no-cors' 是因為 GAS 重新導向的特性
       await fetch(GAS_ENDPOINT, {
         method: "POST",
         mode: "no-cors",
@@ -273,13 +399,27 @@ $(async function () {
       });
 
       // 7. 成功處理
-      alert("訂單已送出，感謝您的購買！");
+      // 成功通知
+      fairyModal({
+        type: "success",
+        message: "訂單已送出，感謝您的購買！<br/>小精靈正全速處理中 ✨",
+        buttons: [
+          { text: "回首頁", class: "btn_main", onClick: () => location.href = 'index.php' },
+          { text: "好喔", class: "btn_sub" }
+        ]
+      });
       localStorage.removeItem(CART_KEY);
-      location.reload();
+      location.reload(); // 重新整理清空畫面
 
     } catch (err) {
       console.error("發送錯誤：", err);
-      alert("訂單送出時發生錯誤：" + err.message);
+      // 錯誤通知
+      console.error("發送錯誤：", err);
+      fairyModal({
+        type: "error",
+        message: `訂單送出時發生意外...<br/>管理員回報：${err.message}`,
+        buttons: [{ text: "我再試試", class: "btn_main" }]
+      });
     } finally {
       toggleLoading(false);
     }

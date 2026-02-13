@@ -1,3 +1,4 @@
+
 body {
   font-family: $font-family-serif;
   background-color: var(--bg-color);
@@ -31,3 +32,8 @@ a {
   }
 }
 
+.text {
+  &_color {
+    color: var(--brand-color-dark);
+  }
+}
